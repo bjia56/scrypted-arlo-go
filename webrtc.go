@@ -21,6 +21,10 @@ type WebRTCConfiguration = webrtc.Configuration
 type WebRTCICEServer = webrtc.ICEServer
 type WebRTCSessionDescription = webrtc.SessionDescription
 
+func NewWebRTCSDPType(sdpType string) webrtc.SDPType {
+	return webrtc.NewSDPType(sdpType)
+}
+
 const (
 	WebRTCMimeTypeOpus = webrtc.MimeTypeOpus
 	WebRTCMimeTypePCMA = webrtc.MimeTypePCMA
