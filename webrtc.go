@@ -17,9 +17,14 @@ type WebRTCConfiguration = webrtc.Configuration
 type WebRTCICEServer = webrtc.ICEServer
 type WebRTCSessionDescription = webrtc.SessionDescription
 type WebRTCICECandidateInit = webrtc.ICECandidateInit
+type WebRTCICECandidate = webrtc.ICECandidate
 
 func NewWebRTCSDPType(sdpType string) webrtc.SDPType {
 	return webrtc.NewSDPType(sdpType)
+}
+
+func WebRTCIceCandidateString(c *WebRTCICECandidate) string {
+	return c.String()
 }
 
 const (
@@ -30,7 +35,7 @@ const (
 )
 
 type WebRTCManager struct {
-	*webrtc.PeerConnection
+	pc                  *webrtc.PeerConnection
 	audioRTP            net.Conn
 	videoRTP            net.Conn
 	iceCompleteSentinel <-chan struct{}
@@ -39,11 +44,11 @@ type WebRTCManager struct {
 func NewWebRTCManager(cfg WebRTCConfiguration) (*WebRTCManager, error) {
 	var mgr WebRTCManager
 	var err error
-	mgr.PeerConnection, err = webrtc.NewPeerConnection(cfg)
+	mgr.pc, err = webrtc.NewPeerConnection(cfg)
 	if err != nil {
 		return nil, err
 	}
-	mgr.iceCompleteSentinel = webrtc.GatheringCompletePromise(mgr.PeerConnection)
+	mgr.iceCompleteSentinel = webrtc.GatheringCompletePromise(mgr.pc)
 	return &mgr, nil
 }
 
@@ -63,7 +68,7 @@ func (mgr *WebRTCManager) InitializeAudioRTPListener(codecMimeType string) (port
 
 	audioTrack, err := webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: codecMimeType}, "audio", "pion-audio")
 
-	rtpSender, err := mgr.AddTrack(audioTrack)
+	rtpSender, err := mgr.pc.AddTrack(audioTrack)
 	if err != nil {
 		return 0, err
 	}
@@ -122,7 +127,7 @@ func (mgr *WebRTCManager) InitializeVideoRTPListener(codecMimeType string) (port
 
 	videoTrack, err := webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: codecMimeType}, "video", "pion-video")
 
-	rtpSender, err := mgr.AddTrack(videoTrack)
+	rtpSender, err := mgr.pc.AddTrack(videoTrack)
 	if err != nil {
 		return 0, err
 	}
@@ -163,6 +168,30 @@ func (mgr *WebRTCManager) InitializeVideoRTPListener(codecMimeType string) (port
 		return 0, err
 	}
 	return port, nil
+}
+
+func (mgr *WebRTCManager) CreateOffer() (WebRTCSessionDescription, error) {
+	return mgr.pc.CreateOffer(nil)
+}
+
+func (mgr *WebRTCManager) CreateAnswer() (WebRTCSessionDescription, error) {
+	return mgr.pc.CreateAnswer(nil)
+}
+
+func (mgr *WebRTCManager) SetLocalDescription(desc WebRTCSessionDescription) error {
+	return mgr.pc.SetLocalDescription(desc)
+}
+
+func (mgr *WebRTCManager) SetRemoteDescription(desc WebRTCSessionDescription) error {
+	return mgr.pc.SetRemoteDescription(desc)
+}
+
+func (mgr *WebRTCManager) AddICECandidate(c WebRTCICECandidateInit) error {
+	return mgr.pc.AddICECandidate(c)
+}
+
+func (mgr *WebRTCManager) OnICECandidate(cb func(*WebRTCICECandidate)) {
+	mgr.pc.OnICECandidate(cb)
 }
 
 func (mgr *WebRTCManager) Close() {
