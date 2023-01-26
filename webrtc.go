@@ -31,10 +31,6 @@ func NewWebRTCICEServer(urls []string, username string, credential string) WebRT
 	}
 }
 
-func WebRTCIceCandidateString(c *WebRTCICECandidate) string {
-	return c.String()
-}
-
 func WebRTCSessionDescriptionSDP(s WebRTCSessionDescription) string {
 	return s.SDP
 }
