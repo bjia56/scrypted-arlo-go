@@ -27,6 +27,10 @@ func WebRTCIceCandidateString(c *WebRTCICECandidate) string {
 	return c.String()
 }
 
+func WebRTCSessionDescriptionSDP(s WebRTCSessionDescription) string {
+	return s.SDP
+}
+
 const (
 	WebRTCMimeTypeOpus = webrtc.MimeTypeOpus
 	WebRTCMimeTypePCMA = webrtc.MimeTypePCMA
