@@ -1,4 +1,4 @@
-module github.com/bjia56/scrypted-arlo
+module github.com/bjia56/scrypted-arlo-go
 
 go 1.19
 

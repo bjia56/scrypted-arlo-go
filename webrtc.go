@@ -1,4 +1,4 @@
-package arlo
+package scrypted_arlo_go
 
 import (
 	"errors"
