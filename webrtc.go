@@ -16,7 +16,7 @@ var UDP_PACKET_SIZE = 1600
 type WebRTCConfiguration = webrtc.Configuration
 type WebRTCICEServer = webrtc.ICEServer
 type WebRTCSessionDescription = webrtc.SessionDescription
-type WebRTCIceCandidateInit = webrtc.ICECandidateInit
+type WebRTCICECandidateInit = webrtc.ICECandidateInit
 
 func NewWebRTCSDPType(sdpType string) webrtc.SDPType {
 	return webrtc.NewSDPType(sdpType)
