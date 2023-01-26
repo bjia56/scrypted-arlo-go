@@ -23,6 +23,14 @@ func NewWebRTCSDPType(sdpType string) webrtc.SDPType {
 	return webrtc.NewSDPType(sdpType)
 }
 
+func NewWebRTCICEServer(urls []string, username string, credential string) WebRTCICEServer {
+	return WebRTCICEServer{
+		URLs:       urls,
+		Username:   username,
+		Credential: credential,
+	}
+}
+
 func WebRTCIceCandidateString(c *WebRTCICECandidate) string {
 	return c.String()
 }
