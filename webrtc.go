@@ -214,4 +214,12 @@ func (mgr *WebRTCManager) Close() {
 		mgr.audioRTP.Close()
 		mgr.audioRTP = nil
 	}
+	if mgr.videoRTP != nil {
+		mgr.videoRTP.Close()
+		mgr.videoRTP = nil
+	}
+	if mgr.pc != nil {
+		mgr.pc.Close()
+		mgr.pc = nil
+	}
 }
