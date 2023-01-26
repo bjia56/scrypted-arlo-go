@@ -51,6 +51,7 @@ type WebRTCManager struct {
 	audioRTP            net.Conn
 	videoRTP            net.Conn
 	iceCompleteSentinel <-chan struct{}
+	iceCandidates       []WebRTCICECandidate
 }
 
 func NewWebRTCManager(cfg WebRTCConfiguration) (*WebRTCManager, error) {
@@ -61,6 +62,11 @@ func NewWebRTCManager(cfg WebRTCConfiguration) (*WebRTCManager, error) {
 		return nil, err
 	}
 	mgr.iceCompleteSentinel = webrtc.GatheringCompletePromise(mgr.pc)
+	mgr.pc.OnICECandidate(func(c *WebRTCICECandidate) {
+		if c != nil {
+			mgr.iceCandidates = append(mgr.iceCandidates, *c)
+		}
+	})
 	return &mgr, nil
 }
 
@@ -202,8 +208,9 @@ func (mgr *WebRTCManager) AddICECandidate(c WebRTCICECandidateInit) error {
 	return mgr.pc.AddICECandidate(c)
 }
 
-func (mgr *WebRTCManager) OnICECandidate(cb func(*WebRTCICECandidate)) {
-	mgr.pc.OnICECandidate(cb)
+func (mgr *WebRTCManager) WaitAndGetICECandidates() []WebRTCICECandidate {
+	<-mgr.iceCompleteSentinel
+	return mgr.iceCandidates
 }
 
 func (mgr *WebRTCManager) Close() {
