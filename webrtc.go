@@ -43,6 +43,7 @@ const (
 )
 
 type WebRTCManager struct {
+	name                string
 	pc                  *webrtc.PeerConnection
 	audioRTP            net.Conn
 	videoRTP            net.Conn
@@ -50,8 +51,10 @@ type WebRTCManager struct {
 	iceCandidates       []WebRTCICECandidate
 }
 
-func NewWebRTCManager(cfg WebRTCConfiguration) (*WebRTCManager, error) {
-	var mgr WebRTCManager
+func NewWebRTCManager(name string, cfg WebRTCConfiguration) (*WebRTCManager, error) {
+	mgr := WebRTCManager{
+		name: name,
+	}
 	var err error
 	mgr.pc, err = webrtc.NewPeerConnection(cfg)
 	if err != nil {
@@ -64,6 +67,10 @@ func NewWebRTCManager(cfg WebRTCConfiguration) (*WebRTCManager, error) {
 		}
 	})
 	return &mgr, nil
+}
+
+func (mgr *WebRTCManager) Printf(msg string, args ...any) {
+	fmt.Printf(fmt.Sprintf("[%s] ", mgr.name)+msg, args...)
 }
 
 func (mgr *WebRTCManager) initializeRTPListener(kind, codecMimeType string) (conn net.Conn, port int, err error) {
@@ -107,7 +114,7 @@ func (mgr *WebRTCManager) initializeRTPListener(kind, codecMimeType string) (con
 		for {
 			n, _, err := conn.(*net.UDPConn).ReadFrom(inboundRTPPacket)
 			if err != nil {
-				fmt.Printf("error during %s track read: %s\n", kind, err)
+				mgr.Printf("Error during %s track read: %s\n", kind, err)
 				return
 			}
 
@@ -117,7 +124,7 @@ func (mgr *WebRTCManager) initializeRTPListener(kind, codecMimeType string) (con
 					return
 				}
 
-				fmt.Printf("error writing to %s track: %s\n", kind, err)
+				mgr.Printf("Error writing to %s track: %s\n", kind, err)
 				return
 			}
 		}
@@ -128,7 +135,7 @@ func (mgr *WebRTCManager) initializeRTPListener(kind, codecMimeType string) (con
 		return conn, 0, err
 	}
 
-	fmt.Printf("Created %s RTP listener at udp://127.0.0.1:%d", kind, port)
+	mgr.Printf("Created %s RTP listener at udp://127.0.0.1:%d", kind, port)
 	return conn, port, nil
 }
 
@@ -171,28 +178,28 @@ func (mgr *WebRTCManager) AddICECandidate(c WebRTCICECandidateInit) error {
 }
 
 func (mgr *WebRTCManager) WaitAndGetICECandidates() []WebRTCICECandidate {
-	fmt.Printf("Waiting for ICE candidate gathering to finish\n")
+	mgr.Printf("Waiting for ICE candidate gathering to finish\n")
 	<-mgr.iceCompleteSentinel
-	fmt.Printf("ICE candidate gathering complete\n")
+	mgr.Printf("ICE candidate gathering complete\n")
 	return mgr.iceCandidates
 }
 
 func (mgr *WebRTCManager) ForwardAudioTo(dst *WebRTCManager) {
 	mgr.pc.OnTrack(func(track *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) {
-		fmt.Printf("Track has started: %s %s\n", track.Kind().String(), track.Codec().MimeType)
+		mgr.Printf("Track has started: %s %s\n", track.Kind().String(), track.Codec().MimeType)
 		if track.Kind() != webrtc.RTPCodecTypeAudio {
 			return
 		}
 
 		outputTrack, err := webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: track.Codec().MimeType}, track.Kind().String(), "pion-forwarder")
 		if err != nil {
-			fmt.Printf("Error creating forwarding output track: %s\n", err)
+			mgr.Printf("Error creating forwarding output track: %s\n", err)
 			return
 		}
 
 		rtpSender, err := dst.pc.AddTrack(outputTrack)
 		if err != nil {
-			fmt.Printf("Error adding output track: %s\n", err)
+			mgr.Printf("Error adding output track: %s\n", err)
 			return
 		}
 
@@ -212,12 +219,12 @@ func (mgr *WebRTCManager) ForwardAudioTo(dst *WebRTCManager) {
 			for {
 				rtp, _, err := track.ReadRTP()
 				if err != nil {
-					fmt.Printf("Error reading RTP from track: %s\n", err)
+					mgr.Printf("Error reading RTP from track: %s\n", err)
 					return
 				}
 
 				if err = outputTrack.WriteRTP(rtp); err != nil {
-					fmt.Printf("Error writing RTP to forwarding output track: %s\n", err)
+					mgr.Printf("Error writing RTP to forwarding output track: %s\n", err)
 					return
 				}
 			}
