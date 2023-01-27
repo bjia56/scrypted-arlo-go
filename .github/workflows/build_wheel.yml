@@ -98,7 +98,7 @@ jobs:
           path: ./wheelhouse/*.whl
 
 
-  build_linux:
+  build_linux_x86_64:
     name: Linux 38,39,310,311 x86_64
     runs-on: ubuntu-20.04
 
@@ -124,3 +124,40 @@ jobs:
         with:
           name: wheels
           path: ./wheelhouse/*.whl
+
+  build_linux_arm:
+    name: Linux 38,39,310,311 armv7l
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build Docker image (stage 4)
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: ./Dockerfile.armv7l
+          push: false
+          platforms: linux/armhf
+          tags: armv7l:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=min
+          load: true
+
+      - name: Extract output
+        run: |
+          docker run -v /tmp/output:/host armv7l:latest bash -c "cp /export/* /host/"
+          tar -zcvf /tmp/output.tar.gz /tmp/output
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: wheels
+          path: /tmp/output/*.whl
