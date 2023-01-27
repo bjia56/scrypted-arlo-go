@@ -66,6 +66,12 @@ func NewWebRTCManager(name string, cfg WebRTCConfiguration) (*WebRTCManager, err
 			mgr.iceCandidates = append(mgr.iceCandidates, *c)
 		}
 	})
+	mgr.pc.OnConnectionStateChange(func(s webrtc.PeerConnectionState) {
+		mgr.Printf("OnConnectionStateChange %s", s.String())
+	})
+	mgr.pc.OnICEConnectionStateChange(func(is webrtc.ICEConnectionState) {
+		mgr.Printf("OnICEConnectionStateChange %s", is.String())
+	})
 	return &mgr, nil
 }
 
@@ -135,7 +141,7 @@ func (mgr *WebRTCManager) initializeRTPListener(kind, codecMimeType string) (con
 		return conn, 0, err
 	}
 
-	mgr.Printf("Created %s RTP listener at udp://127.0.0.1:%d", kind, port)
+	mgr.Printf("Created %s RTP listener at udp://127.0.0.1:%d\n", kind, port)
 	return conn, port, nil
 }
 
