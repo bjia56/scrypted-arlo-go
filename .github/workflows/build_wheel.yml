@@ -4,6 +4,7 @@ on: [ push, pull_request ]
 
 jobs:
   build_macos_310_311:
+    if: false
     name: MacOS 310,311 x86_64,arm64
     strategy:
       matrix:
@@ -62,6 +63,7 @@ jobs:
 
 
   build_macos_38_39_x86_64:
+    if: false
     name: MacOS 38,39 x86_64
     runs-on: macos-10.15
 
