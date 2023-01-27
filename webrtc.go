@@ -66,26 +66,30 @@ func NewWebRTCManager(cfg WebRTCConfiguration) (*WebRTCManager, error) {
 	return &mgr, nil
 }
 
-func (mgr *WebRTCManager) InitializeAudioRTPListener(codecMimeType string) (port int, err error) {
+func (mgr *WebRTCManager) initializeRTPListener(kind, codecMimeType string) (conn net.Conn, port int, err error) {
 	// cleanup in case of error
 	defer func() {
-		if err != nil && mgr.audioRTP != nil {
-			mgr.audioRTP.Close()
-			mgr.audioRTP = nil
+		if err != nil && conn != nil {
+			conn.Close()
+			conn = nil
 		}
 	}()
 
-	mgr.audioRTP, err = net.ListenUDP("udp", &net.UDPAddr{IP: net.ParseIP("127.0.0.1"), Port: 0})
+	conn, err = net.ListenUDP("udp", &net.UDPAddr{IP: net.ParseIP("127.0.0.1"), Port: 0})
 	if err != nil {
-		return 0, err
+		return conn, 0, err
 	}
 
-	audioTrack, err := webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: codecMimeType}, "audio", "pion-audio")
+	track, err := webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: codecMimeType}, kind, "pion-"+kind)
 
-	rtpSender, err := mgr.pc.AddTrack(audioTrack)
+	rtpSender, err := mgr.pc.AddTrack(track)
 	if err != nil {
-		return 0, err
+		return conn, 0, err
 	}
+
+	// Read incoming RTCP packets
+	// Before these packets are returned they are processed by interceptors. For things
+	// like NACK this needs to be called.
 	go func() {
 		rtcpBuf := make([]byte, 1500)
 		for {
@@ -94,25 +98,26 @@ func (mgr *WebRTCManager) InitializeAudioRTPListener(codecMimeType string) (port
 			}
 		}
 	}()
+
 	go func() {
 		// wait for ice to complete gathering
 		<-mgr.iceCompleteSentinel
 
 		inboundRTPPacket := make([]byte, UDP_PACKET_SIZE)
 		for {
-			n, _, err := mgr.audioRTP.(*net.UDPConn).ReadFrom(inboundRTPPacket)
+			n, _, err := conn.(*net.UDPConn).ReadFrom(inboundRTPPacket)
 			if err != nil {
-				fmt.Printf("error during audioTrack read: %s\n", err)
+				fmt.Printf("error during %s track read: %s\n", kind, err)
 				return
 			}
 
-			if _, err = audioTrack.Write(inboundRTPPacket[:n]); err != nil {
+			if _, err = track.Write(inboundRTPPacket[:n]); err != nil {
 				if errors.Is(err, io.ErrClosedPipe) {
 					// peerConnection has been closed.
 					return
 				}
 
-				fmt.Printf("error writing to audioTrack: %s\n", err)
+				fmt.Printf("error writing to %s track: %s\n", kind, err)
 				return
 			}
 		}
@@ -120,68 +125,29 @@ func (mgr *WebRTCManager) InitializeAudioRTPListener(codecMimeType string) (port
 
 	port, err = strconv.Atoi(strings.Split(mgr.audioRTP.LocalAddr().String(), ":")[1])
 	if err != nil {
+		return conn, 0, err
+	}
+
+	fmt.Printf("Created %s RTP listener at udp://127.0.0.1:%d", kind, port)
+	return conn, port, nil
+}
+
+func (mgr *WebRTCManager) InitializeAudioRTPListener(codecMimeType string) (port int, err error) {
+	conn, port, err := mgr.initializeRTPListener("audio", codecMimeType)
+	if err != nil {
 		return 0, err
 	}
-	return port, nil
+	mgr.audioRTP = conn
+	return port, err
 }
 
 func (mgr *WebRTCManager) InitializeVideoRTPListener(codecMimeType string) (port int, err error) {
-	// cleanup in case of error
-	defer func() {
-		if err != nil && mgr.videoRTP != nil {
-			mgr.videoRTP.Close()
-			mgr.videoRTP = nil
-		}
-	}()
-
-	mgr.videoRTP, err = net.ListenUDP("udp", &net.UDPAddr{IP: net.ParseIP("127.0.0.1"), Port: 0})
+	conn, port, err := mgr.initializeRTPListener("video", codecMimeType)
 	if err != nil {
 		return 0, err
 	}
-
-	videoTrack, err := webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: codecMimeType}, "video", "pion-video")
-
-	rtpSender, err := mgr.pc.AddTrack(videoTrack)
-	if err != nil {
-		return 0, err
-	}
-	go func() {
-		rtcpBuf := make([]byte, 1500)
-		for {
-			if _, _, rtcpErr := rtpSender.Read(rtcpBuf); rtcpErr != nil {
-				return
-			}
-		}
-	}()
-	go func() {
-		// wait for ice to complete gathering
-		<-mgr.iceCompleteSentinel
-
-		inboundRTPPacket := make([]byte, UDP_PACKET_SIZE)
-		for {
-			n, _, err := mgr.videoRTP.(*net.UDPConn).ReadFrom(inboundRTPPacket)
-			if err != nil {
-				fmt.Printf("error during videoTrack read: %s\n", err)
-				return
-			}
-
-			if _, err = videoTrack.Write(inboundRTPPacket[:n]); err != nil {
-				if errors.Is(err, io.ErrClosedPipe) {
-					// peerConnection has been closed.
-					return
-				}
-
-				fmt.Printf("error writing to videoTrack: %s\n", err)
-				return
-			}
-		}
-	}()
-
-	port, err = strconv.Atoi(strings.Split(mgr.videoRTP.LocalAddr().String(), ":")[1])
-	if err != nil {
-		return 0, err
-	}
-	return port, nil
+	mgr.videoRTP = conn
+	return port, err
 }
 
 func (mgr *WebRTCManager) CreateOffer() (WebRTCSessionDescription, error) {
@@ -205,8 +171,58 @@ func (mgr *WebRTCManager) AddICECandidate(c WebRTCICECandidateInit) error {
 }
 
 func (mgr *WebRTCManager) WaitAndGetICECandidates() []WebRTCICECandidate {
+	fmt.Printf("Waiting for ICE candidate gathering to finish")
 	<-mgr.iceCompleteSentinel
+	fmt.Printf("ICE candidate gathering complete")
 	return mgr.iceCandidates
+}
+
+func (mgr *WebRTCManager) ForwardAudioTo(dst *WebRTCManager) {
+	mgr.pc.OnTrack(func(track *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) {
+		fmt.Printf("Track has started: %s %s\n", track.Kind().String(), track.Codec().MimeType)
+		if track.Kind() != webrtc.RTPCodecTypeAudio {
+			return
+		}
+
+		outputTrack, err := webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: track.Codec().MimeType}, track.Kind().String(), "pion-forwarder")
+		if err != nil {
+			fmt.Printf("Error creating forwarding output track: %s\n", err)
+			return
+		}
+
+		rtpSender, err := dst.pc.AddTrack(outputTrack)
+		if err != nil {
+			fmt.Printf("Error adding output track: %s\n", err)
+			return
+		}
+
+		// Read incoming RTCP packets
+		// Before these packets are returned they are processed by interceptors. For things
+		// like NACK this needs to be called.
+		go func() {
+			rtcpBuf := make([]byte, 1500)
+			for {
+				if _, _, rtcpErr := rtpSender.Read(rtcpBuf); rtcpErr != nil {
+					return
+				}
+			}
+		}()
+
+		go func() {
+			for {
+				rtp, _, err := track.ReadRTP()
+				if err != nil {
+					fmt.Printf("Error reading RTP from track: %s\n", err)
+					return
+				}
+
+				if err = outputTrack.WriteRTP(rtp); err != nil {
+					fmt.Printf("Error writing RTP to forwarding output track: %s\n", err)
+					return
+				}
+			}
+		}()
+	})
 }
 
 func (mgr *WebRTCManager) Close() {
