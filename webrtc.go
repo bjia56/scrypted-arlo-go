@@ -171,9 +171,9 @@ func (mgr *WebRTCManager) AddICECandidate(c WebRTCICECandidateInit) error {
 }
 
 func (mgr *WebRTCManager) WaitAndGetICECandidates() []WebRTCICECandidate {
-	fmt.Printf("Waiting for ICE candidate gathering to finish")
+	fmt.Printf("Waiting for ICE candidate gathering to finish\n")
 	<-mgr.iceCompleteSentinel
-	fmt.Printf("ICE candidate gathering complete")
+	fmt.Printf("ICE candidate gathering complete\n")
 	return mgr.iceCandidates
 }
 
