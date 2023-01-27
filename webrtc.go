@@ -185,35 +185,42 @@ func (mgr *WebRTCManager) WaitAndGetICECandidates() []WebRTCICECandidate {
 }
 
 func (mgr *WebRTCManager) ForwardAudioTo(dst *WebRTCManager) {
+	outputTrack, err := webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: WebRTCMimeTypeOpus}, "audio", "pion-forwarder")
+	if err != nil {
+		mgr.Printf("Error creating forwarding output track: %s\n", err)
+		return
+	}
+
+	rtpSender, err := dst.pc.AddTrack(outputTrack)
+	if err != nil {
+		mgr.Printf("Error adding output track: %s\n", err)
+		return
+	}
+
+	// Read incoming RTCP packets
+	// Before these packets are returned they are processed by interceptors. For things
+	// like NACK this needs to be called.
+	go func() {
+		rtcpBuf := make([]byte, 1500)
+		for {
+			if _, _, rtcpErr := rtpSender.Read(rtcpBuf); rtcpErr != nil {
+				return
+			}
+		}
+	}()
+
+	alreadyForwarded := false
 	mgr.pc.OnTrack(func(track *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) {
 		mgr.Printf("Track has started: %s %s\n", track.Kind().String(), track.Codec().MimeType)
 		if track.Kind() != webrtc.RTPCodecTypeAudio {
 			return
 		}
 
-		outputTrack, err := webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: track.Codec().MimeType}, track.Kind().String(), "pion-forwarder")
-		if err != nil {
-			mgr.Printf("Error creating forwarding output track: %s\n", err)
+		if alreadyForwarded {
+			mgr.Printf("Already forwaring a track, skipping this one")
 			return
 		}
-
-		rtpSender, err := dst.pc.AddTrack(outputTrack)
-		if err != nil {
-			mgr.Printf("Error adding output track: %s\n", err)
-			return
-		}
-
-		// Read incoming RTCP packets
-		// Before these packets are returned they are processed by interceptors. For things
-		// like NACK this needs to be called.
-		go func() {
-			rtcpBuf := make([]byte, 1500)
-			for {
-				if _, _, rtcpErr := rtpSender.Read(rtcpBuf); rtcpErr != nil {
-					return
-				}
-			}
-		}()
+		alreadyForwarded = true
 
 		go func() {
 			for {
