@@ -123,7 +123,7 @@ func (mgr *WebRTCManager) initializeRTPListener(kind, codecMimeType string) (con
 		}
 	}()
 
-	port, err = strconv.Atoi(strings.Split(mgr.audioRTP.LocalAddr().String(), ":")[1])
+	port, err = strconv.Atoi(strings.Split(conn.LocalAddr().String(), ":")[1])
 	if err != nil {
 		return conn, 0, err
 	}
