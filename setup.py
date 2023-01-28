@@ -57,7 +57,7 @@ class CustomBuildExt(build_ext):
 
 setuptools.setup(
     name=PACKAGE_NAME,
-    version="0.0.1",
+    version="0.1.0",
     author="Brett Jia",
     author_email="dev.bjia56@gmail.com",
     description="",
