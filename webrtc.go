@@ -93,7 +93,7 @@ func (mgr *WebRTCManager) initializeRTPListener(kind, codecMimeType string) (con
 		return conn, 0, err
 	}
 
-	track, err := webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: codecMimeType}, kind, "pion"+kind)
+	track, err := webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: codecMimeType}, kind, "pion-"+kind)
 
 	rtpSender, err := mgr.pc.AddTrack(track)
 	if err != nil {
@@ -222,6 +222,11 @@ func (mgr *WebRTCManager) ForwardAudioTo(dst *WebRTCManager) {
 			return
 		}
 
+		if track.Codec().MimeType != WebRTCMimeTypeOpus {
+			mgr.Printf("Cannot forward non-opus track, skipping this one")
+			return
+		}
+
 		if alreadyForwarded {
 			mgr.Printf("Already forwaring a track, skipping this one")
 			return
@@ -235,6 +240,8 @@ func (mgr *WebRTCManager) ForwardAudioTo(dst *WebRTCManager) {
 					mgr.Printf("Error reading RTP from track: %s\n", err)
 					return
 				}
+
+				mgr.Printf("Read RTP packet of payload length %d", len(rtp.Payload))
 
 				if err = outputTrack.WriteRTP(rtp); err != nil {
 					mgr.Printf("Error writing RTP to forwarding output track: %s\n", err)

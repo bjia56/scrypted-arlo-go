@@ -23,10 +23,10 @@ RUN mkdir build3.11 && \
     cd build3.11 && \
     pip3.11 wheel ..
 
-RUN cd build3.7 && auditwheel repair *armv7l.whl && \
-    cd build3.8 && auditwheel repair *armv7l.whl && \
-    cd build3.9 && auditwheel repair *armv7l.whl && \
-    cd build3.10 && auditwheel repair *armv7l.whl && \
+RUN cd build3.7 && auditwheel repair *armv7l.whl && cd .. && \
+    cd build3.8 && auditwheel repair *armv7l.whl && cd .. && \
+    cd build3.9 && auditwheel repair *armv7l.whl && cd .. && \
+    cd build3.10 && auditwheel repair *armv7l.whl && cd .. && \
     cd build3.11 && auditwheel repair *armv7l.whl
 RUN mkdir /export && \
     cp build3.7/wheelhouse/*.whl /export && \
