@@ -67,10 +67,10 @@ func NewWebRTCManager(name string, cfg WebRTCConfiguration) (*WebRTCManager, err
 		}
 	})
 	mgr.pc.OnConnectionStateChange(func(s webrtc.PeerConnectionState) {
-		mgr.Printf("OnConnectionStateChange %s", s.String())
+		mgr.Printf("OnConnectionStateChange %s\n", s.String())
 	})
 	mgr.pc.OnICEConnectionStateChange(func(is webrtc.ICEConnectionState) {
-		mgr.Printf("OnICEConnectionStateChange %s", is.String())
+		mgr.Printf("OnICEConnectionStateChange %s\n", is.String())
 	})
 	return &mgr, nil
 }
@@ -93,7 +93,7 @@ func (mgr *WebRTCManager) initializeRTPListener(kind, codecMimeType string) (con
 		return conn, 0, err
 	}
 
-	track, err := webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: codecMimeType}, kind, "pion-"+kind)
+	track, err := webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: codecMimeType}, kind, "pion"+kind)
 
 	rtpSender, err := mgr.pc.AddTrack(track)
 	if err != nil {
