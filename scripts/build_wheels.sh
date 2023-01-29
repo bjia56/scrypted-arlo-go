@@ -18,11 +18,9 @@ build_wheel 3.8
 build_wheel 3.9
 build_wheel 3.10
 build_wheel 3.11
-#wait
 
 repair_wheel 3.7
 repair_wheel 3.8
 repair_wheel 3.9
 repair_wheel 3.10
 repair_wheel 3.11
-#wait

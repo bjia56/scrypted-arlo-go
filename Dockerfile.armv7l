@@ -7,7 +7,7 @@ RUN mkdir build
 WORKDIR build
 COPY . .
 
-RUN ./scripts/concurrent_wheels.sh
+RUN ./scripts/build_wheels.sh
 
 RUN mkdir /export && \
     cp build3.7/wheelhouse/*.whl /export && \

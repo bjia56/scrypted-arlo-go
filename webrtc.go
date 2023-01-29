@@ -190,17 +190,15 @@ func (mgr *WebRTCManager) WaitAndGetICECandidates() []WebRTCICECandidate {
 	return mgr.iceCandidates
 }
 
-func (mgr *WebRTCManager) ForwardAudioTo(dst *WebRTCManager) {
+func (mgr *WebRTCManager) ForwardAudioTo(dst *WebRTCManager) error {
 	outputTrack, err := webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: WebRTCMimeTypeOpus}, "audio", "pion-forwarder")
 	if err != nil {
-		mgr.Printf("Error creating forwarding output track: %s\n", err)
-		return
+		return fmt.Errorf("error creating forwarding output track: %w", err)
 	}
 
 	rtpSender, err := dst.pc.AddTrack(outputTrack)
 	if err != nil {
-		mgr.Printf("Error adding output track: %s\n", err)
-		return
+		return fmt.Errorf("error adding output track: %w", err)
 	}
 
 	// Read incoming RTCP packets
@@ -228,7 +226,7 @@ func (mgr *WebRTCManager) ForwardAudioTo(dst *WebRTCManager) {
 		}
 
 		if alreadyForwarded {
-			mgr.Printf("Already forwaring a track, skipping this one")
+			mgr.Printf("Already forwarding a track, skipping this one")
 			return
 		}
 		alreadyForwarded = true
@@ -241,8 +239,6 @@ func (mgr *WebRTCManager) ForwardAudioTo(dst *WebRTCManager) {
 					return
 				}
 
-				mgr.Printf("Read RTP packet of payload length %d", len(rtp.Payload))
-
 				if err = outputTrack.WriteRTP(rtp); err != nil {
 					mgr.Printf("Error writing RTP to forwarding output track: %s\n", err)
 					return
@@ -250,6 +246,8 @@ func (mgr *WebRTCManager) ForwardAudioTo(dst *WebRTCManager) {
 			}
 		}()
 	})
+
+	return nil
 }
 
 func (mgr *WebRTCManager) Close() {
