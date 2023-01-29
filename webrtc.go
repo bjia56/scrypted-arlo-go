@@ -239,6 +239,8 @@ func (mgr *WebRTCManager) ForwardAudioTo(dst *WebRTCManager) error {
 					return
 				}
 
+				mgr.Printf("Payload type: %d", rtp.PayloadType)
+
 				if err = outputTrack.WriteRTP(rtp); err != nil {
 					mgr.Printf("Error writing RTP to forwarding output track: %s\n", err)
 					return
