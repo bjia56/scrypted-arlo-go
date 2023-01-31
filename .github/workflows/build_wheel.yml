@@ -191,4 +191,4 @@ jobs:
           CIBW_SKIP: "cp36-* cp37-*"
           CIBW_ARCHS: "native"
           CIBW_ENVIRONMENT: >
-          GOARCH=amd64
+            GOARCH=amd64
