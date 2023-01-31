@@ -40,6 +40,8 @@ class CustomBuildExt(build_ext):
             **go_env,
             "CGO_LDFLAGS_ALLOW": ".*",
         }
+
+        # https://stackoverflow.com/a/64706392
         if sys.platform == "win32":
             env["SYSTEMROOT"] = os.environ.get("SYSTEMROOT", "")
 
