@@ -128,7 +128,7 @@ jobs:
           path: ./wheelhouse/*.whl
 
   build_linux_arm:
-    #if: false
+    if: false
     name: Linux 37,38,39,310,311 armv7l
     runs-on: ubuntu-latest
 
