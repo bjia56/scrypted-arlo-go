@@ -233,18 +233,23 @@ func (mgr *WebRTCManager) ForwardAudioTo(dst *WebRTCManager) error {
 
 		go func() {
 			for {
-				rtp, _, err := track.ReadRTP()
-				if err != nil {
-					mgr.Printf("Error reading RTP from track: %s\n", err)
-					return
-				}
+				inboundRTPPacket := make([]byte, 1500)
+				for {
+					n, _, err := track.Read(inboundRTPPacket)
+					if err != nil {
+						mgr.Printf("Error reading RTP from track: %s\n", err)
+						return
+					}
 
-				// explicit override for opus
-				rtp.PayloadType = 97
+					if _, err = outputTrack.Write(inboundRTPPacket[:n]); err != nil {
+						if errors.Is(err, io.ErrClosedPipe) {
+							// peerConnection has been closed.
+							return
+						}
 
-				if err = outputTrack.WriteRTP(rtp); err != nil {
-					mgr.Printf("Error writing RTP to forwarding output track: %s\n", err)
-					return
+						mgr.Printf("Error writing RTP to forwarding output track: %s\n", err)
+						return
+					}
 				}
 			}
 		}()
