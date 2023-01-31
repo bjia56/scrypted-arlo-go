@@ -4,7 +4,7 @@ on: [ push, pull_request ]
 
 jobs:
   build_macos_310_311:
-    #if: false
+    if: false
     name: MacOS 310,311 x86_64,arm64
     strategy:
       matrix:
@@ -63,7 +63,7 @@ jobs:
 
 
   build_macos_38_39_x86_64:
-    #if: false
+    if: false
     name: MacOS 38,39 x86_64
     runs-on: macos-10.15
 
@@ -101,6 +101,7 @@ jobs:
 
 
   build_linux_x86_64:
+    if: false
     name: Linux 37,38,39,310,311 x86_64
     runs-on: ubuntu-20.04
 
@@ -164,3 +165,30 @@ jobs:
         with:
           name: wheels
           path: /tmp/output/*.whl
+
+  build_windows:
+    name: Windows, 3x, x86_64
+    runs-on: windows-2019
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.19.x"
+
+      - name: install gopy
+        run: go install github.com/bjia56/gopy@testing
+
+      - name: install goimports
+        run: go install golang.org/x/tools/cmd/goimports@latest
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.11.2
+        env:
+          CIBW_BUILD: "cp38-*"
+          CIBW_SKIP: "cp36-* cp37-*"
+          CIBW_ARCHS: "native"
+          CIBW_ENVIRONMENT: >
+            GOARCH=amd64
