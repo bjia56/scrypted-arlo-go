@@ -101,7 +101,7 @@ jobs:
 
 
   build_linux_x86_64:
-    if: false
+    #if: false
     name: Linux 37,38,39,310,311 x86_64
     runs-on: ubuntu-20.04
 
