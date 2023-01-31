@@ -47,7 +47,7 @@ class CustomBuildExt(build_ext):
                 PYTHON_BINARY,
                 *ext.sources,
             ],
-            env={"PATH": bin_path, **go_env, "CGO_LDFLAGS_ALLOW": ".*", "GOPROXY": "direct"},
+            env={"PATH": bin_path, **go_env, "CGO_LDFLAGS_ALLOW": ".*"},
         )
 
         # dirty hack to avoid "from pkg import pkg", remove if needed
