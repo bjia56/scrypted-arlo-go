@@ -119,7 +119,7 @@ jobs:
           CIBW_BEFORE_ALL_LINUX: |
             curl -o go.tar.gz https://dl.google.com/go/go1.19.3.linux-amd64.tar.gz
             tar -C /usr/local -xzf go.tar.gz
-            go install github.com/bjia56/gopy@110c532d3809c39ce849e99049e2396fa25c382c
+            go install github.com/bjia56/gopy@89e3d5d18c6c5e2bc4a02123dd8dfc0a24a6fe39
             go install golang.org/x/tools/cmd/goimports@latest
 
       - name: Upload Artifacts
@@ -179,7 +179,7 @@ jobs:
           go-version: "1.19.x"
 
       - name: install gopy
-        run: go install github.com/bjia56/gopy@110c532d3809c39ce849e99049e2396fa25c382c
+        run: go install github.com/bjia56/gopy@89e3d5d18c6c5e2bc4a02123dd8dfc0a24a6fe39
 
       - name: install goimports
         run: go install golang.org/x/tools/cmd/goimports@latest
