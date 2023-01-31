@@ -35,6 +35,14 @@ class CustomBuildExt(build_ext):
 
         destination = os.path.dirname(os.path.abspath(self.get_ext_fullpath(ext.name))) + f"/{PACKAGE_NAME}"
 
+        env = {
+            "PATH": bin_path,
+            **go_env,
+            "CGO_LDFLAGS_ALLOW": ".*",
+        }
+        if sys.platform == "win32":
+            env["SYSTEMROOT"] = os.environ.get("SYSTEMROOT", "")
+
         subprocess.check_call(
             [
                 "gopy",
@@ -47,7 +55,7 @@ class CustomBuildExt(build_ext):
                 PYTHON_BINARY,
                 *ext.sources,
             ],
-            env={"PATH": bin_path, **go_env, "CGO_LDFLAGS_ALLOW": ".*"},
+            env=env,
         )
 
         # dirty hack to avoid "from pkg import pkg", remove if needed
