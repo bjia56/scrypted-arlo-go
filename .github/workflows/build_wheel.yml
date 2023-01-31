@@ -179,7 +179,7 @@ jobs:
           go-version: "1.19.x"
 
       - name: install gopy
-        run: go install github.com/bjia56/gopy@testing
+        run: go install github.com/bjia56/gopy@110c532d3809c39ce849e99049e2396fa25c382c
 
       - name: install goimports
         run: go install golang.org/x/tools/cmd/goimports@latest
@@ -191,4 +191,4 @@ jobs:
           CIBW_SKIP: "cp36-* cp37-*"
           CIBW_ARCHS: "native"
           CIBW_ENVIRONMENT: >
-            GOARCH=amd64
+          GOARCH=amd64
