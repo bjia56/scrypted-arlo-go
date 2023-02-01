@@ -180,7 +180,7 @@ jobs:
 
       - name: install gopy
         run: |
-          cd /tmp
+          cd $env:TEMP
           git clone https://github.com/bjia56/gopy
           cd gopy
           git checkout v0.4.5+bjia56.v1
