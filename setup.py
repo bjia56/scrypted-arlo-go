@@ -70,7 +70,7 @@ setuptools.setup(
     version="0.0.1",
     author="Brett Jia",
     author_email="dev.bjia56@gmail.com",
-    description="",
+    description="Go extensions for @scrypted/arlo",
     url="https://github.com/bjia56/scrypted-arlo-go",
     classifiers=[
         "Programming Language :: Python :: 3",
