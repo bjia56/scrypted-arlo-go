@@ -9,7 +9,7 @@ on:
 jobs:
   build_macos_11:
     #if: false
-    name: MacOS 11 310,311 x86_64,arm64
+    name: MacOS 11 ${{ matrix.arch_cibw_go[0] }}
     strategy:
       matrix:
         python_version: [ "cp310", "cp311" ]
@@ -68,7 +68,7 @@ jobs:
 
   build_macos_10:
     #if: false
-    name: MacOS 10.15 38,39,310,311 x86_64
+    name: MacOS 10.15 x86_64
     runs-on: macos-10.15
 
     steps:
@@ -84,7 +84,8 @@ jobs:
 
       - name: install goimports
         run: go install golang.org/x/tools/cmd/goimports@latest
-  
+        
+      # need to specifically choose python3.9 under macosx10.9
       - name: install python 3.9
         run: |
           curl -o python.pkg https://www.python.org/ftp/python/3.9.12/python-3.9.12-macosx10.9.pkg
@@ -94,7 +95,7 @@ jobs:
         uses: pypa/cibuildwheel@v2.11.2
         env:
           CGO_ENABLED: 1
-          CIBW_BUILD: "cp38-macosx_x86_64 cp39-macosx_x86_64 cp310-macosx_x86_64 cp311-macosx_x86_64"
+          CIBW_BUILD: "cp38-macosx_x86_64 cp39-macosx_x86_64"
           CIBW_ARCHS: "native"
           CIBW_ENVIRONMENT: >
             PATH=$PATH:/usr/local/go/bin
@@ -109,7 +110,7 @@ jobs:
 
   build_linux_x86_64:
     #if: false
-    name: Linux 37,38,39,310,311 x86_64
+    name: Linux x86_64
     runs-on: ubuntu-20.04
 
     steps:
@@ -137,7 +138,7 @@ jobs:
 
   build_linux_arm:
     #if: false
-    name: Linux 37,38,39,310,311 armv7l
+    name: Linux armv7l
     runs-on: ubuntu-latest
 
     steps:
@@ -175,7 +176,7 @@ jobs:
 
   build_windows:
     #if: false
-    name: Windows 37,38,39,310,311 x86_64
+    name: Windows x86_64
     runs-on: windows-2019
 
     steps:
