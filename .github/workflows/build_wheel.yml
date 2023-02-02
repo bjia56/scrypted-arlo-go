@@ -57,6 +57,7 @@ jobs:
           PYTHON_BINARY_PATH: /usr/local/bin/python_for_build
           CIBW_ENVIRONMENT: >
             PATH=$PATH:/usr/local/go/bin
+            MACOSX_DEPLOYMENT_TARGET: "10.12"
           CIBW_BUILD: "${{ matrix.python_version }}-*"
           MACOSX_DEPLOYMENT_TARGET: "10.12"
 
@@ -94,6 +95,7 @@ jobs:
           CIBW_ENVIRONMENT: >
             PATH=$PATH:/usr/local/go/bin
             GOARCH=amd64
+            MACOSX_DEPLOYMENT_TARGET: "10.12"
           CIBW_BEFORE_ALL_MACOS: |
             curl -o python.pkg https://www.python.org/ftp/python/3.9.12/python-3.9.12-macosx10.9.pkg
             sudo installer -pkg python.pkg -target /
