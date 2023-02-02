@@ -16,7 +16,7 @@ jobs:
         arch_cibw_go:
           - [ "x86_64", "amd64" ]
           - [ "arm64", "arm64" ]
-    runs-on: MacOS-12
+    runs-on: macos-11
     steps:
       - uses: actions/checkout@v3
 
@@ -71,7 +71,7 @@ jobs:
   build_macos_38_39_x86_64:
     #if: false
     name: MacOS 38,39 x86_64
-    runs-on: macos-12
+    runs-on: macos-10.15
 
     steps:
       - uses: actions/checkout@v3
