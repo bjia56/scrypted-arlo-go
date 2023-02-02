@@ -84,6 +84,11 @@ jobs:
 
       - name: install goimports
         run: go install golang.org/x/tools/cmd/goimports@latest
+  
+      - name: install python 3.10
+        run: |
+          curl -o python.pkg https://www.python.org/ftp/python/3.10.9/python-3.10.9-macos11.pkg
+          sudo installer -pkg python.pkg -target /
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.11.2
