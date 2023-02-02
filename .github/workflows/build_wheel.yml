@@ -88,11 +88,12 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.11.2
         env:
+          CGO_ENABLED: 1
           CIBW_BUILD: "cp38-macosx_x86_64 cp39-macosx_x86_64 cp310-macosx_x86_64 cp311-macosx_x86_64"
           CIBW_ARCHS: "native"
           CIBW_ENVIRONMENT: >
             PATH=$PATH:/usr/local/go/bin
-            GOARCH=amd64
+          GOARCH: amd64
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
