@@ -45,6 +45,7 @@ class CustomBuildExt(build_ext):
         if sys.platform == "win32":
             env["SYSTEMROOT"] = os.environ.get("SYSTEMROOT", "")
 
+        subprocess.check_call(["go", "env"], env=env)
         subprocess.check_call(
             [
                 "gopy",
