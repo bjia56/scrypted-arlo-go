@@ -8,7 +8,7 @@ on:
 
 jobs:
   build_macos_11_12:
-    if: false
+    #if: false
     name: MacOS ${{ matrix.os_version }} cp3${{ matrix.python3_version }} ${{ matrix.arch_cibw_go[0] }}
     strategy:
       fail-fast: false
@@ -109,48 +109,6 @@ jobs:
         with:
           name: wheels
           path: ./wheelhouse/*.whl
-
-  build_macos_10:
-    if: false
-    name: MacOS 10.15 cp38,cp39 x86_64
-    runs-on: macos-10.15
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: "1.19.x"
-
-      - name: install gopy
-        run: go install github.com/go-python/gopy@v0.4.5
-
-      - name: install goimports
-        run: go install golang.org/x/tools/cmd/goimports@latest
-        
-      # need to specifically choose python3.9 under macosx10.9
-      - name: install python 3.9
-        run: |
-          curl -o python.pkg https://www.python.org/ftp/python/3.9.12/python-3.9.12-macosx10.9.pkg
-          sudo installer -pkg python.pkg -target /
-
-      - name: Build wheels
-        uses: pypa/cibuildwheel@v2.11.2
-        env:
-          CIBW_BUILD: "cp38-macosx_x86_64 cp39-macosx_x86_64"
-          CIBW_ARCHS: "native"
-          CIBW_ENVIRONMENT: >
-            PATH=$PATH:/usr/local/go/bin
-            GOARCH=amd64
-            CGO_ENABLED=1
-
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: wheels
-          path: ./wheelhouse/*.whl
-
 
   build_linux_x86_64:
     if: false
