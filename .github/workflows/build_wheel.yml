@@ -14,7 +14,7 @@ jobs:
       fail-fast: false
       matrix:
         os_version: [ 11, 12 ]
-        python3_version: [ 8, 9, 10, 11 ]
+        python3_version: [ 7, 8, 9, 10, 11 ]
         arch_cibw_go:
           - [ "x86_64", "amd64" ]
           - [ "arm64", "arm64" ]
@@ -66,7 +66,7 @@ jobs:
       fail-fast: false
       matrix:
         os_version: [ 10.15 ]
-        python3_version: [ 8, 9, 10 ]
+        python3_version: [ 7, 8, 9, 10 ]
         arch_cibw_go:
           - [ "x86_64", "amd64" ]
     runs-on: macos-${{ matrix.os_version }}
