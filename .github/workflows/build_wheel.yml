@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python_version: [ "cp39", "cp310", "cp311" ]
+        python_version: [ "cp39" ] #, "cp310", "cp311" ]
         arch_cibw_go:
           - [ "x86_64", "amd64" ]
           - [ "arm64", "arm64" ]
@@ -36,8 +36,8 @@ jobs:
         if: matrix.python_version == 'cp39'
         run: |
           curl -o python.pkg https://www.python.org/ftp/python/3.9.12/python-3.9.12-macos11.pkg
-          mkdir $TMPDIR/python && pkgutil --expand python.pkg $TMPDIR/python
-          ls -R $TMPDIR/python
+          mkdir $TMPDIR/python123 && pkgutil --expand python.pkg $TMPDIR/python123
+          ls -R $TMPDIR/python123
           sudo installer -pkg python.pkg -target /
           ln -s /usr/local/opt/python@3.9/libexec/bin/python3.9 /usr/local/bin/python_for_build
           /usr/local/bin/python_for_build --version
@@ -78,7 +78,7 @@ jobs:
 
 
   build_macos_10:
-    #if: false
+    if: false
     name: MacOS 10.15 cp38,cp39 x86_64
     runs-on: macos-10.15
 
@@ -120,7 +120,7 @@ jobs:
 
 
   build_linux_x86_64:
-    #if: false
+    if: false
     name: Linux cp38,cp39,cp310,cp311 x86_64
     runs-on: ubuntu-20.04
 
@@ -149,7 +149,7 @@ jobs:
           path: ./wheelhouse/*.whl
 
   build_linux_arm:
-    #if: false
+    if: false
     name: Linux cp38,cp39,cp310,cp311 armv7l
     runs-on: ubuntu-latest
 
@@ -187,7 +187,7 @@ jobs:
           path: /tmp/output/*.whl
 
   build_windows:
-    #if: false
+    if: false
     name: Windows cp38,cp39,cp310,cp311 x86_64
     runs-on: windows-2019
 
