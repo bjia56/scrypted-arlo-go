@@ -7,16 +7,25 @@ on:
   workflow_dispatch:
 
 jobs:
-  build_macos_310_311:
+  build_macos:
     #if: false
-    name: MacOS 310,311 x86_64,arm64
+    name: MacOS ${{ matrix.os_version }} cp3${{ matrix.python3_version }} ${{ matrix.arch_cibw_go[0] }}
     strategy:
+      fail-fast: false
       matrix:
-        python_version: [ "cp310", "cp311" ]
+        os_version: [ 10.15, 11, 12 ]
+        python3_version: [ 7, 8, 9, 10, 11 ]
         arch_cibw_go:
           - [ "x86_64", "amd64" ]
           - [ "arm64", "arm64" ]
-    runs-on: macos-11
+        exclude:
+          - os_version: 10.15
+            python3_version: 11
+          - os_version: 10.15
+            arch_cibw_go: [ "arm64", "arm64"]
+          - python3_version: 7
+            arch_cibw_go: [ "arm64", "arm64"]
+    runs-on: macos-${{ matrix.os_version }}
     steps:
       - uses: actions/checkout@v3
 
@@ -31,19 +40,11 @@ jobs:
       - name: install goimports
         run: go install golang.org/x/tools/cmd/goimports@latest
 
-      - name: install python 3.10
-        if: matrix.python_version == 'cp310'
+      - name: install python 3.${{ matrix.python3_version }} 
         run: |
-          curl -o python.pkg https://www.python.org/ftp/python/3.10.8/python-3.10.8-macos11.pkg
-          sudo installer -pkg python.pkg -target /
-          ln -s /usr/local/opt/python@3.10/bin/python3.10 /usr/local/bin/python_for_build
-
-      - name: install python 3.11
-        if: matrix.python_version == 'cp311'
-        run: |
-          curl -o python.pkg https://www.python.org/ftp/python/3.11.0/python-3.11.0-macos11.pkg
-          sudo installer -pkg python.pkg -target /
-          ln -s /usr/local/opt/python@3.11/bin/python3.11 /usr/local/bin/python_for_build
+          brew install python@3.${{ matrix.python3_version }}
+          ln -s /usr/local/opt/python@3.${{ matrix.python3_version }}/bin/python3.${{ matrix.python3_version }}  /usr/local/bin/python_for_build
+          /usr/local/bin/python_for_build --version
 
       - name: install cibuildwheel and pybindgen
         run: /usr/local/bin/python_for_build -m pip install cibuildwheel==2.11.2 pybindgen
@@ -51,62 +52,23 @@ jobs:
       - name: build wheels
         run: /usr/local/bin/python_for_build -m cibuildwheel --output-dir wheelhouse
         env:
-          CGO_ENABLED: 1
           CIBW_ARCHS: ${{ matrix.arch_cibw_go[0] }}
-          GOARCH: ${{ matrix.arch_cibw_go[1] }}
           PYTHON_BINARY_PATH: /usr/local/bin/python_for_build
+          CIBW_BUILD: "cp3${{ matrix.python3_version }}-*"
           CIBW_ENVIRONMENT: >
             PATH=$PATH:/usr/local/go/bin
-          CIBW_BUILD: "${{ matrix.python_version }}-*"
-
+            GOARCH=${{ matrix.arch_cibw_go[1] }}
+            CGO_ENABLED=1
+          
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
           name: wheels
           path: ./wheelhouse/*.whl
-
-
-  build_macos_38_39_x86_64:
-    #if: false
-    name: MacOS 38,39 x86_64
-    runs-on: macos-10.15
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: "1.19.x"
-
-      - name: install gopy
-        run: go install github.com/go-python/gopy@v0.4.5
-
-      - name: install goimports
-        run: go install golang.org/x/tools/cmd/goimports@latest
-
-      - name: Build wheels
-        uses: pypa/cibuildwheel@v2.11.2
-        env:
-          CIBW_BUILD: "cp38-macosx_x86_64 cp39-macosx_x86_64"
-          CIBW_ARCHS: "native"
-          CIBW_ENVIRONMENT: >
-            PATH=$PATH:/usr/local/go/bin
-            GOARCH=amd64
-          CIBW_BEFORE_ALL_MACOS: |
-            curl -o python.pkg https://www.python.org/ftp/python/3.9.12/python-3.9.12-macosx10.9.pkg
-            sudo installer -pkg python.pkg -target /
-
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: wheels
-          path: ./wheelhouse/*.whl
-
 
   build_linux_x86_64:
     #if: false
-    name: Linux 37,38,39,310,311 x86_64
+    name: Linux cp37,cp38,cp39,cp310,cp311 x86_64
     runs-on: ubuntu-20.04
 
     steps:
@@ -120,6 +82,7 @@ jobs:
           CIBW_ARCHS: "native"
           CIBW_ENVIRONMENT: >
             PATH=$PATH:/usr/local/go/bin
+            CGO_ENABLED=1
           CIBW_BEFORE_ALL_LINUX: |
             curl -o go.tar.gz https://dl.google.com/go/go1.19.3.linux-amd64.tar.gz
             tar -C /usr/local -xzf go.tar.gz
@@ -134,7 +97,7 @@ jobs:
 
   build_linux_arm:
     #if: false
-    name: Linux 37,38,39,310,311 armv7l
+    name: Linux cp37,cp38,cp39,cp310,cp311 armv7l
     runs-on: ubuntu-latest
 
     steps:
@@ -172,7 +135,7 @@ jobs:
 
   build_windows:
     #if: false
-    name: Windows 37,38,39,310,311 x86_64
+    name: Windows cp37,cp38,cp39,cp310,cp311 x86_64
     runs-on: windows-2019
 
     steps:
@@ -203,6 +166,7 @@ jobs:
           CIBW_ARCHS: "native"
           CIBW_ENVIRONMENT: >
             GOARCH=amd64
+            CGO_ENABLED=1
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
