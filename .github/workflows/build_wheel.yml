@@ -7,17 +7,18 @@ on:
   workflow_dispatch:
 
 jobs:
-  build_macos_11:
+  build_macos_11_12:
     #if: false
-    name: MacOS 11 ${{ matrix.python_version}} ${{ matrix.arch_cibw_go[0] }}
+    name: MacOS ${{ matrix.os_version }} ${{ matrix.python_version}} ${{ matrix.arch_cibw_go[0] }}
     strategy:
       fail-fast: false
       matrix:
-        python_version: [ "cp39" ] #, "cp310", "cp311" ]
+        os_version: [ 11, 12 ]
+        python_version: [ "cp310", "cp311" ]
         arch_cibw_go:
           - [ "x86_64", "amd64" ]
           - [ "arm64", "arm64" ]
-    runs-on: macos-11
+    runs-on: macos-${{ matrix.os_version }}
     steps:
       - uses: actions/checkout@v3
 
@@ -32,13 +33,6 @@ jobs:
       - name: install goimports
         run: go install golang.org/x/tools/cmd/goimports@latest
 
-      - name: install python 3.9
-        if: matrix.python_version == 'cp39'
-        run: |
-          curl -o python.pkg https://www.python.org/ftp/python/3.9.13/python-3.9.13-macos11.pkg
-          sudo installer -pkg python.pkg -target /
-          ln -s /Library/Frameworks/Python.framework/Versions/3.9/bin/python3.9 /usr/local/bin/python_for_build
-          /usr/local/bin/python_for_build --version
       - name: install python 3.10
         if: matrix.python_version == 'cp310'
         run: |
@@ -67,16 +61,12 @@ jobs:
             PATH=$PATH:/usr/local/go/bin
             GOARCH=${{ matrix.arch_cibw_go[1] }}
             CGO_ENABLED=1
-          MACOSX_DEPLOYMENT_TARGET: "10.12"
-          ARCHFLAGS: "-arch ${{ matrix.arch_cibw_go[0] }}"
-          _PYTHON_HOST_PLATFORM: "macosx-10.9-x86_64"
           
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
           name: wheels
           path: ./wheelhouse/*.whl
-
 
   build_macos_10:
     if: false
