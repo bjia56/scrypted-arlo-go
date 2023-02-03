@@ -9,12 +9,12 @@ on:
 jobs:
   build_macos_11_12:
     #if: false
-    name: MacOS ${{ matrix.os_version }} cp3${{ matrix.python_version }} ${{ matrix.arch_cibw_go[0] }}
+    name: MacOS ${{ matrix.os_version }} cp3${{ matrix.python3_version }} ${{ matrix.arch_cibw_go[0] }}
     strategy:
       fail-fast: false
       matrix:
         os_version: [ 11, 12 ]
-        python_version: [ 10, 11 ]
+        python3_version: [ 8, 9, 10, 11 ]
         arch_cibw_go:
           - [ "x86_64", "amd64" ]
           - [ "arm64", "arm64" ]
@@ -33,10 +33,10 @@ jobs:
       - name: install goimports
         run: go install golang.org/x/tools/cmd/goimports@latest
 
-      - name: install python 3.${{ matrix.python_version }} 
+      - name: install python 3.${{ matrix.python3_version }} 
         run: |
-          brew install python@3.${{ matrix.python_version }}
-          ln -s /usr/local/opt/python@3.${{ matrix.python_version }}/bin/python3.${{ matrix.python_version }}  /usr/local/bin/python_for_build
+          brew install python@3.${{ matrix.python3_version }}
+          ln -s /usr/local/opt/python@3.${{ matrix.python3_version }}/bin/python3.${{ matrix.python3_version }}  /usr/local/bin/python_for_build
           /usr/local/bin/python_for_build --version
 
       - name: install cibuildwheel and pybindgen
@@ -47,7 +47,7 @@ jobs:
         env:
           CIBW_ARCHS: ${{ matrix.arch_cibw_go[0] }}
           PYTHON_BINARY_PATH: /usr/local/bin/python_for_build
-          CIBW_BUILD: "cp3${{ matrix.python_version }}-*"
+          CIBW_BUILD: "cp3${{ matrix.python3_version }}-*"
           CIBW_ENVIRONMENT: >
             PATH=$PATH:/usr/local/go/bin
             GOARCH=${{ matrix.arch_cibw_go[1] }}
