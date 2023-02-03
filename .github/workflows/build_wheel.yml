@@ -37,7 +37,7 @@ jobs:
         run: |
           curl -o python.pkg https://www.python.org/ftp/python/3.9.12/python-3.9.12-macos11.pkg
           sudo installer -pkg python.pkg -target /
-          ln -s /usr/local/opt/python@3.9/bin/python3.9 /usr/local/bin/python_for_build
+          ln -s /usr/local/opt/python@3.9/libexec/bin/python3.9 /usr/local/bin/python_for_build
           /usr/local/bin/python_for_build --version
       - name: install python 3.10
         if: matrix.python_version == 'cp310'
