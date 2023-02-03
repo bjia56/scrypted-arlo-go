@@ -39,8 +39,8 @@ jobs:
           CIBW_SKIP: "cp36-*"
           CIBW_ENVIRONMENT: >
             PATH=$PATH:/usr/local/go/bin
-          GOARCH: ${{ matrix.arch_cibw_go[1] }}
-          CGO_ENABLED: 1
+            GOARCH=${{ matrix.arch_cibw_go[1] }}
+            CGO_ENABLED=1
           
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
@@ -81,8 +81,8 @@ jobs:
           CIBW_ARCHS: "native"
           CIBW_ENVIRONMENT: >
             PATH=$PATH:/usr/local/go/bin
-          GOARCH: amd64
-          CGO_ENABLED: 1
+            GOARCH=amd64
+            CGO_ENABLED=1
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
@@ -107,12 +107,12 @@ jobs:
           CIBW_ARCHS: "native"
           CIBW_ENVIRONMENT: >
             PATH=$PATH:/usr/local/go/bin
+            CGO_ENABLED=1
           CIBW_BEFORE_ALL_LINUX: |
             curl -o go.tar.gz https://dl.google.com/go/go1.19.3.linux-amd64.tar.gz
             tar -C /usr/local -xzf go.tar.gz
             go install github.com/go-python/gopy@v0.4.5
             go install golang.org/x/tools/cmd/goimports@latest
-          CGO_ENABLED: 1
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
@@ -189,8 +189,9 @@ jobs:
           CIBW_BUILD: "cp3*"
           CIBW_SKIP: "cp36-*"
           CIBW_ARCHS: "native"
-          GOARCH: "amd64"
-          CGO_ENABLED: 1
+          CIBW_ENVIRONMENT: >
+            GOARCH=amd64
+            CGO_ENABLED=1
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
