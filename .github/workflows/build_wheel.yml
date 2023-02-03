@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  build_macos_11_12:
-    if: false
+  build_macos:
+    #if: false
     name: MacOS ${{ matrix.os_version }} cp3${{ matrix.python3_version }} ${{ matrix.arch_cibw_go[0] }}
     strategy:
       fail-fast: false
@@ -67,7 +67,7 @@ jobs:
           path: ./wheelhouse/*.whl
 
   build_macos_10-15:
-    #if: false
+    if: false
     name: MacOS ${{ matrix.os_version }} cp3${{ matrix.python3_version }} ${{ matrix.arch_cibw_go[0] }}
     strategy:
       fail-fast: false
