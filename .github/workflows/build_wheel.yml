@@ -9,11 +9,10 @@ on:
 jobs:
   build_macos_11:
     #if: false
-    name: MacOS 11 ${{ matrix.python_version }} ${{ matrix.arch_cibw_go[0] }}
+    name: MacOS 11 cp38,cp39,cp310,cp311 ${{ matrix.arch_cibw_go[0] }}
     strategy:
       fail-fast: false
       matrix:
-        python_version: [ "cp38", "cp39", "cp310", "cp311" ]
         arch_cibw_go:
           - [ "x86_64", "amd64" ]
           - [ "arm64", "arm64" ]
@@ -32,52 +31,17 @@ jobs:
       - name: install goimports
         run: go install golang.org/x/tools/cmd/goimports@latest
 
-      - name: install python 3.8
-        if: matrix.python_version == 'cp38'
-        run: |
-          curl -o python.pkg https://www.python.org/ftp/python/3.8.10/python-3.8.10-macos11.pkg
-          sudo installer -verbose -pkg python.pkg -target /
-          ln -s /usr/local/opt/python@3.8/bin/python3.8 /usr/local/bin/python_for_build
-          stat /usr/local/bin/python_for_build
-
-      - name: install python 3.9
-        if: matrix.python_version == 'cp39'
-        run: |
-          curl -o python.pkg https://www.python.org/ftp/python/3.9.12/python-3.9.12-macos11.pkg
-          sudo installer -verbose -pkg python.pkg -target /
-          ln -s /usr/local/opt/python@3.9/bin/python3.9 /usr/local/bin/python_for_build
-          stat /usr/local/bin/python_for_build
-
-      - name: install python 3.10
-        if: matrix.python_version == 'cp310'
-        run: |
-          curl -o python.pkg https://www.python.org/ftp/python/3.10.8/python-3.10.8-macos11.pkg
-          sudo installer -verbose -pkg python.pkg -target /
-          ln -s /usr/local/opt/python@3.10/bin/python3.10 /usr/local/bin/python_for_build
-          stat /usr/local/bin/python_for_build
-
-      - name: install python 3.11
-        if: matrix.python_version == 'cp311'
-        run: |
-          curl -o python.pkg https://www.python.org/ftp/python/3.11.0/python-3.11.0-macos11.pkg
-          sudo installer -verbose -pkg python.pkg -target /
-          ln -s /usr/local/opt/python@3.11/bin/python3.11 /usr/local/bin/python_for_build
-          stat /usr/local/bin/python_for_build
-
-      - name: install cibuildwheel and pybindgen
-        run: /usr/local/bin/python_for_build -m pip install cibuildwheel==2.11.2 pybindgen
-
       - name: build wheels
-        run: /usr/local/bin/python_for_build -m cibuildwheel --output-dir wheelhouse
+        uses: pypa/cibuildwheel@v2.11.2
         env:
-          CGO_ENABLED: 1
           CIBW_ARCHS: ${{ matrix.arch_cibw_go[0] }}
-          GOARCH: ${{ matrix.arch_cibw_go[1] }}
-          PYTHON_BINARY_PATH: /usr/local/bin/python_for_build
+          CIBW_BUILD: "cp3*"
+          CIBW_SKIP: "cp36-*"
           CIBW_ENVIRONMENT: >
             PATH=$PATH:/usr/local/go/bin
-          CIBW_BUILD: "${{ matrix.python_version }}-*"
-
+          GOARCH: ${{ matrix.arch_cibw_go[1] }}
+          CGO_ENABLED: 1
+          
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -113,12 +77,12 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.11.2
         env:
-          CGO_ENABLED: 1
           CIBW_BUILD: "cp38-macosx_x86_64 cp39-macosx_x86_64"
           CIBW_ARCHS: "native"
           CIBW_ENVIRONMENT: >
             PATH=$PATH:/usr/local/go/bin
           GOARCH: amd64
+          CGO_ENABLED: 1
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
@@ -148,6 +112,7 @@ jobs:
             tar -C /usr/local -xzf go.tar.gz
             go install github.com/go-python/gopy@v0.4.5
             go install golang.org/x/tools/cmd/goimports@latest
+          CGO_ENABLED: 1
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
@@ -225,6 +190,7 @@ jobs:
           CIBW_SKIP: "cp36-*"
           CIBW_ARCHS: "native"
           GOARCH: "amd64"
+          CGO_ENABLED: 1
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
