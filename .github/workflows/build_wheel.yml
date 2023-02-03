@@ -7,13 +7,13 @@ on:
   workflow_dispatch:
 
 jobs:
-  build_macos_11_12:
+  build_macos_11_12_13:
     #if: false
     name: MacOS ${{ matrix.os_version }} ${{ matrix.python_version}} ${{ matrix.arch_cibw_go[0] }}
     strategy:
       fail-fast: false
       matrix:
-        os_version: [ 11, 12 ]
+        os_version: [ 11, 12, 13 ]
         python_version: [ "cp310", "cp311" ]
         arch_cibw_go:
           - [ "x86_64", "amd64" ]
