@@ -8,7 +8,7 @@ on:
 
 jobs:
   build_macos_11_12:
-    #if: false
+    if: !(${{ matrix.python3_version }} == 7 && ${{ matrix.arch_cibw_go[0] }} == "arm64")
     name: MacOS ${{ matrix.os_version }} cp3${{ matrix.python3_version }} ${{ matrix.arch_cibw_go[0] }}
     strategy:
       fail-fast: false
