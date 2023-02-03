@@ -59,7 +59,7 @@ jobs:
           name: wheels
           path: ./wheelhouse/*.whl
 
-  build_macos_10.15
+  build_macos_1015
     #if: false
     name: MacOS ${{ matrix.os_version }} cp3${{ matrix.python3_version }} ${{ matrix.arch_cibw_go[0] }}
     strategy:
