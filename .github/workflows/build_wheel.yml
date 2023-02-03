@@ -36,7 +36,7 @@ jobs:
         if: matrix.python_version == 'cp39'
         run: |
           curl -o python.pkg https://www.python.org/ftp/python/3.9.12/python-3.9.12-macos11.pkg
-          mkdir $TMPDIR/python123 && pkgutil --expand python.pkg $TMPDIR/python123
+          pkgutil --expand python.pkg $TMPDIR/python123
           ls -R $TMPDIR/python123
           sudo installer -pkg python.pkg -target /
           ln -s /usr/local/opt/python@3.9/libexec/bin/python3.9 /usr/local/bin/python_for_build
