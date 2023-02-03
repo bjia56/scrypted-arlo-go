@@ -75,7 +75,7 @@ func NewWebRTCManager(name string, cfg WebRTCConfiguration) (*WebRTCManager, err
 	return &mgr, nil
 }
 
-func (mgr *WebRTCManager) Printf(msg string, args ...any) {
+func (mgr *WebRTCManager) Printf(msg string, args ...interface{}) {
 	fmt.Printf(fmt.Sprintf("[%s] ", mgr.name)+msg, args...)
 }
 
