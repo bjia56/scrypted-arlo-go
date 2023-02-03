@@ -36,7 +36,7 @@ jobs:
       - name: install python 3.${{ matrix.python_version }} 
         run: |
           brew install python@3.${{ matrix.python_version }}
-          ln -s /usr/local/opt/python@3.${{ matrix.python_version }}/bin/python.${{ matrix.python_version }}  /usr/local/bin/python_for_build
+          ln -s /usr/local/opt/python@3.${{ matrix.python_version }}/bin/python3.${{ matrix.python_version }}  /usr/local/bin/python_for_build
           /usr/local/bin/python_for_build --version
 
       - name: install cibuildwheel and pybindgen
