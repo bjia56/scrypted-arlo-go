@@ -67,6 +67,9 @@ jobs:
             PATH=$PATH:/usr/local/go/bin
             GOARCH=${{ matrix.arch_cibw_go[1] }}
             CGO_ENABLED=1
+          MACOSX_DEPLOYMENT_TARGET: "10.12"
+          ARCHFLAGS: "-arch ${{ matrix.arch_cibw_go[0] }}"
+          _PYTHON_HOST_PLATFORM: "macosx-10.9-x86_64"
           
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
