@@ -110,7 +110,7 @@ jobs:
         env:
           CIBW_BUILD: "cp3*_aarch64"
           CIBW_SKIP: "cp36-* *-musllinux_aarch64"
-          CIBW_ARCHS: "native"
+          CIBW_ARCHS: "aarch64"
           CIBW_ENVIRONMENT: >
             PATH=$PATH:/usr/local/go/bin
             CGO_ENABLED=1
