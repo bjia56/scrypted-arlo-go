@@ -130,7 +130,7 @@ jobs:
           path: ./wheelhouse/*.whl
 
   build_linux_32_aarch64:
-    if: false
+    #if: false
     name: Linux cp37,cp38,cp39,cp310,cp311 32-bit aarch64
     runs-on: ubuntu-latest
 
@@ -145,10 +145,12 @@ jobs:
       - name: Run build
         uses: pguyot/arm-runner-action@v2
         with:
+          base_image: raspios_lite_arm64:latest
           copy_artifact_path: /tmp/output/*
           copy_artifact_dest: /tmp/output/
           commands: |
-            bash
+            apt update && apt -y upgrade
+            curl -sSL https://get.docker.com | sh
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
