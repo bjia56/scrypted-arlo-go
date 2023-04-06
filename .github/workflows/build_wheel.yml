@@ -10,7 +10,7 @@ on:
 
 jobs:
   build_macos:
-    #if: false
+    if: false
     name: MacOS ${{ matrix.os_version }} cp3${{ matrix.python3_version }} ${{ matrix.arch_cibw_go[0] }}
     strategy:
       fail-fast: false
@@ -42,7 +42,7 @@ jobs:
       - name: install goimports
         run: go install golang.org/x/tools/cmd/goimports@latest
 
-      - name: install python 3.${{ matrix.python3_version }} 
+      - name: install python 3.${{ matrix.python3_version }}
         run: |
           brew install python@3.${{ matrix.python3_version }}
           ln -s /usr/local/opt/python@3.${{ matrix.python3_version }}/bin/python3.${{ matrix.python3_version }}  /usr/local/bin/python_for_build
@@ -61,7 +61,7 @@ jobs:
             PATH=$PATH:/usr/local/go/bin
             GOARCH=${{ matrix.arch_cibw_go[1] }}
             CGO_ENABLED=1
-          
+
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -69,7 +69,7 @@ jobs:
           path: ./wheelhouse/*.whl
 
   build_linux_x86_64:
-    #if: false
+    if: false
     name: Linux cp37,cp38,cp39,cp310,cp311 x86_64
     runs-on: ubuntu-20.04
 
@@ -98,7 +98,7 @@ jobs:
           path: ./wheelhouse/*.whl
 
   build_linux_arm64:
-    #if: false
+    if: false
     name: Linux cp37,cp38,cp39,cp310,cp311 arm64
     runs-on: ubuntu-20.04
 
@@ -129,8 +129,35 @@ jobs:
           name: wheels
           path: ./wheelhouse/*.whl
 
+  build_linux_32_aarch64:
+    if: false
+    name: Linux cp37,cp38,cp39,cp310,cp311 32-bit aarch64
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Create output dir
+        run: |
+          mkdir -p /tmp/output/
+
+      - name: Run build
+        uses: pguyot/arm-runner-action@v2
+        with:
+          copy_artifact_path: /tmp/output/*
+          copy_artifact_dest: /tmp/output/
+          commands: |
+            bash
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: wheels
+          path: /tmp/output/*.whl
+
   build_linux_armv7l:
-    #if: false
+    if: false
     name: Linux cp37,cp38,cp39,cp310,cp311 armv7l
     runs-on: ubuntu-latest
 
@@ -168,7 +195,7 @@ jobs:
           path: /tmp/output/*.whl
 
   build_windows:
-    #if: false
+    if: false
     name: Windows cp37,cp38,cp39,cp310,cp311 x86_64
     runs-on: windows-2019
 
