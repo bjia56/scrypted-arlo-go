@@ -150,11 +150,12 @@ jobs:
           copy_artifact_dest: /tmp/output/
           image_additional_mb: 16384
           commands: |
-            # core stuff
             apt update && apt -y upgrade
             curl -sSL https://get.docker.com | sh
             docker --version
             file $(which docker)
+
+            docker build --platform linux/armhf -t aarch64_32:latest -f ./Dockerfile.armv7l .
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
