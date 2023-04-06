@@ -154,6 +154,7 @@ jobs:
             curl -sSL https://get.docker.com | sh
             docker --version
             file $(which docker)
+            service docker start
 
             docker build --platform linux/armhf -t aarch64_32:latest -f ./Dockerfile.armv7l .
 
