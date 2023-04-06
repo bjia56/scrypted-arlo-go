@@ -156,6 +156,7 @@ jobs:
             file $(which docker)
             service docker start
             sleep 30s
+            journalctl -xu --no-pager docker.service
             service docker status
             stat /var/run/docker.sock
 
