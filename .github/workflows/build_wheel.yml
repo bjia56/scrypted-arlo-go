@@ -148,11 +148,9 @@ jobs:
           base_image: raspios_lite_arm64:latest
           copy_artifact_path: /tmp/output/*
           copy_artifact_dest: /tmp/output/
+          image_additional_mb: 8192
           commands: |
             apt update && apt -y upgrade
-            dpkg --configure -a
-            apt-get install -f
-            apt autoremove
             curl -sSL https://get.docker.com | sh
 
       - name: Upload Artifacts
