@@ -150,6 +150,9 @@ jobs:
           copy_artifact_dest: /tmp/output/
           commands: |
             apt update && apt -y upgrade
+            dpkg --configure -a
+            apt-get install -f
+            apt autoremove
             curl -sSL https://get.docker.com | sh
 
       - name: Upload Artifacts
