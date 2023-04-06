@@ -154,10 +154,11 @@ jobs:
             curl -sSL https://get.docker.com | sh
             docker --version
             file $(which docker)
-            service docker start
+            systemctl daemon-reload
+            systemctl restart docker
             sleep 30s
             journalctl -xu --no-pager docker.service
-            service docker status
+            systemctl status docker
             stat /var/run/docker.sock
 
             docker build --platform linux/armhf -t aarch64_32:latest -f ./Dockerfile.armv7l .
