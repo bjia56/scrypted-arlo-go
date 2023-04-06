@@ -154,6 +154,8 @@ jobs:
             apt update && apt -y upgrade
             curl -sSL https://get.docker.com | sh
             update-alternatives --set iptables /usr/sbin/iptables-legacy
+            modprobe ip_tables
+            echo 'ip_tables' >> /etc/modules
             docker --version
             file $(which docker)
             dockerd
