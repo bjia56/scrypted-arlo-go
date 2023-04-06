@@ -149,6 +149,7 @@ jobs:
           copy_artifact_path: /tmp/output/*
           copy_artifact_dest: /tmp/output/
           image_additional_mb: 16384
+          use_systemd_nspawn: yes
           commands: |
             apt update && apt -y upgrade
             curl -sSL https://get.docker.com | sh
