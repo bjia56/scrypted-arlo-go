@@ -154,7 +154,8 @@ jobs:
             curl -sSL https://get.docker.com | sh
             docker --version
             file $(which docker)
-            service docker restart
+            service docker start
+            sleep 30s
             service docker status
             stat /var/run/docker.sock
 
