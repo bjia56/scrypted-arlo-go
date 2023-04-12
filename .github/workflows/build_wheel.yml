@@ -138,18 +138,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Pre-pull Docker container
-        run: |
-          docker pull --platform linux/armhf ghcr.io/bjia56/armv7l-wheel-builder:main
-          docker save -o builder.tar ghcr.io/bjia56/armv7l-wheel-builder:main
-          mkdir -p /tmp/output/
-
       - name: Run build
         uses: bjia56/raspberry-pi-runner@e0be57670912f808bf148ef7caf8979011e2a780
         with:
           prerun_copy_from: ./*
           commands: |
-            docker load -i builder.tar
             docker build --platform linux/armhf -t aarch64_32:latest -f ./Dockerfile.armv7l .
 
       - name: Upload Artifacts
