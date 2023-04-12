@@ -140,7 +140,7 @@ jobs:
 
       - name: Pre-pull Docker container
         run: |
-          docker pull ghcr.io/bjia56/armv7l-wheel-builder:main
+          docker pull --platform linux/armhf ghcr.io/bjia56/armv7l-wheel-builder:main
           docker save -o builder.tar ghcr.io/bjia56/armv7l-wheel-builder:main
           mkdir -p /tmp/output/
 
