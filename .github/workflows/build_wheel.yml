@@ -143,23 +143,12 @@ jobs:
           mkdir -p /tmp/output/
 
       - name: Run build
-        uses: pguyot/arm-runner-action@v2
+        uses: bjia56/raspberry-pi-runner@7c5ba2e00f1270577446dfc86f29a8ee4d105a5b
         with:
-          base_image: raspios_lite_arm64:latest
-          copy_artifact_path: /tmp/output/*
-          copy_artifact_dest: /tmp/output/
-          image_additional_mb: 16384
-          use_systemd_nspawn: yes
-          systemd_nspawn_options: "-b"
+          prerun_copy_from: .
+          prerun_copy_to: /home/pi/build
           commands: |
-            apt update && apt -y upgrade
-            curl -sSL https://get.docker.com | sh
-            docker --version
-            file $(which docker)
-            dockerd
-            sleep 30s
-            stat /var/run/docker.sock
-
+            cd build
             docker build --platform linux/armhf -t aarch64_32:latest -f ./Dockerfile.armv7l .
 
       - name: Upload Artifacts
