@@ -143,6 +143,8 @@ jobs:
         with:
           prerun_copy_from: ./*
           commands: |
+            echo '{ "max-concurrent-uploads": 1, "max-concurrent-downloads": 2 }' | sudo tee -a /etc/docker/daemon.json
+            sudo systemctl restart docker.service
             docker build --platform linux/armhf -t aarch64_32:latest -f ./Dockerfile.armv7l .
 
       - name: Upload Artifacts
