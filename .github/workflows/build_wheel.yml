@@ -145,10 +145,8 @@ jobs:
       - name: Run build
         uses: bjia56/raspberry-pi-runner@7c5ba2e00f1270577446dfc86f29a8ee4d105a5b
         with:
-          prerun_copy_from: .
-          prerun_copy_to: /home/pi/build
+          prerun_copy_from: ./*
           commands: |
-            cd build
             docker build --platform linux/armhf -t aarch64_32:latest -f ./Dockerfile.armv7l .
 
       - name: Upload Artifacts
