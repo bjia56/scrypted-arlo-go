@@ -44,7 +44,9 @@ def update(pkg_name, link):
     new_anchor.contents[0].replace_with(filename)
 
     # Add it to our index
-    last_anchor.insert_after(new_anchor)
+    br = soup.new_tag("br")
+    last_anchor.insert_after(br)
+    br.insert_after(new_anchor)
 
     # Save it
     with open(index_file, 'wb') as index:
