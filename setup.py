@@ -44,6 +44,10 @@ class CustomBuildExt(build_ext):
         # https://stackoverflow.com/a/64706392
         if sys.platform == "win32":
             env["SYSTEMROOT"] = os.environ.get("SYSTEMROOT", "")
+        
+        if sys.platform == "darwin":
+            env["CGO_LDFLAGS"] = "-mmacosx-version-min=10.15"
+            env["CGO_CFLAGS"] = "-mmacosx-version-min=10.15"
 
         subprocess.check_call(
             [
