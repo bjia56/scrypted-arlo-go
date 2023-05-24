@@ -46,8 +46,10 @@ class CustomBuildExt(build_ext):
             env["SYSTEMROOT"] = os.environ.get("SYSTEMROOT", "")
         
         if sys.platform == "darwin":
-            env["CGO_LDFLAGS"] = "-mmacosx-version-min=10.15"
-            env["CGO_CFLAGS"] = "-mmacosx-version-min=10.15"
+            min_ver = os.environ.get("MACOSX_DEPLOYMENT_TARGET", "")
+            env["MACOSX_DEPLOYMENT_TARGET"] = min_ver
+            env["CGO_LDFLAGS"] = "-mmacosx-version-min=" + min_ver
+            env["CGO_CFLAGS"] = "-mmacosx-version-min=" + min_ver
 
         subprocess.check_call(
             [
