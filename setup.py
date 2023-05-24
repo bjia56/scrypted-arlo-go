@@ -45,6 +45,12 @@ class CustomBuildExt(build_ext):
         if sys.platform == "win32":
             env["SYSTEMROOT"] = os.environ.get("SYSTEMROOT", "")
 
+        if sys.platform == "darwin":
+            min_ver = os.environ.get("MACOSX_DEPLOYMENT_TARGET", "")
+            env["MACOSX_DEPLOYMENT_TARGET"] = min_ver
+            env["CGO_LDFLAGS"] = "-mmacosx-version-min=" + min_ver
+            env["CGO_CFLAGS"] = "-mmacosx-version-min=" + min_ver
+
         subprocess.check_call(
             [
                 "gopy",
