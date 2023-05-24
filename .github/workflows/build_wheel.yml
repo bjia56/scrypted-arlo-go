@@ -11,11 +11,10 @@ on:
 jobs:
   build_macos:
     #if: false
-    name: MacOS ${{ matrix.os_version }} cp3${{ matrix.python3_version }} ${{ matrix.arch_cibw_go[0] }}
+    name: MacOS 10.15 cp3${{ matrix.python3_version }} ${{ matrix.arch_cibw_go[0] }}
     strategy:
       fail-fast: false
       matrix:
-        os_version: [ 13 ]
         python3_version: [ 7, 8, 9, 10, 11 ]
         arch_cibw_go:
           - [ "x86_64", "amd64" ]
@@ -23,7 +22,7 @@ jobs:
         exclude:
           - python3_version: 7
             arch_cibw_go: [ "arm64", "arm64"]
-    runs-on: macos-${{ matrix.os_version }}
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
 
@@ -67,7 +66,7 @@ jobs:
 
   build_linux_x86_64:
     #if: false
-    name: Linux cp37,cp38,cp39,cp310,cp311 x86_64
+    name: Linux x86_64
     runs-on: ubuntu-20.04
 
     steps:
@@ -96,7 +95,7 @@ jobs:
 
   build_linux_arm64:
     #if: false
-    name: Linux cp37,cp38,cp39,cp310,cp311 arm64
+    name: Linux arm64
     runs-on: ubuntu-20.04
 
     steps:
@@ -128,7 +127,7 @@ jobs:
 
   build_linux_armv7l:
     #if: false
-    name: Linux cp37,cp38,cp39,cp310,cp311 armv7l
+    name: Linux armv7l
     runs-on: ubuntu-latest
 
     steps:
@@ -166,7 +165,7 @@ jobs:
 
   build_windows:
     #if: false
-    name: Windows cp37,cp38,cp39,cp310,cp311 x86_64
+    name: Windows x86_64
     runs-on: windows-2019
 
     steps:
