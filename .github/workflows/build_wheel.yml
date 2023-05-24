@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os_version: [ 11, 12, 13 ]
+        os_version: [ 13 ]
         python3_version: [ 7, 8, 9, 10, 11 ]
         arch_cibw_go:
           - [ "x86_64", "amd64" ]
@@ -57,6 +57,7 @@ jobs:
             PATH=$PATH:/usr/local/go/bin
             GOARCH=${{ matrix.arch_cibw_go[1] }}
             CGO_ENABLED=1
+            MACOSX_DEPLOYMENT_TARGET=10.15
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
