@@ -36,8 +36,13 @@ def update(pkg_name, link):
     with open(index_file) as html_file:
         soup = BeautifulSoup(html_file, "html.parser")
 
+    anchors = soup.find_all('a')
+    for anchor in anchors:
+        if anchor['href'] == link:
+            return
+
     # Create a new anchor element for our new version
-    last_anchor = soup.find_all('a')[-1]  # Copy the last anchor element
+    last_anchor = anchors[-1]  # Copy the last anchor element
     new_anchor = copy.copy(last_anchor)
     new_anchor['href'] = link
     url = urlparse(link)
@@ -61,14 +66,9 @@ def main():
     if len(sys.argv) > 1:
         api = f"https://api.github.com/repos/bjia56/scrypted-arlo-go/releases/tags/{sys.argv[1]}"
 
-    if len(sys.argv) > 2:
-        filter = sys.argv[2]
-
     release = requests.get(api).json()
     for asset in release["assets"]:
         url = asset["browser_download_url"]
-        if filter is not None and filter not in url:
-            continue
         update("scrypted-arlo-go", url)
 
 
