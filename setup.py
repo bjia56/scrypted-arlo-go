@@ -57,6 +57,7 @@ class CustomBuildExt(build_ext):
                 "build",
                 "-no-make",
                 "-dynamic-link=True",
+                "-symbols=False",
                 "-output",
                 destination,
                 "-vm",
