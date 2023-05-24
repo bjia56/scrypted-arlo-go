@@ -4,6 +4,7 @@ import copy
 import re
 import requests
 import pathlib
+import sys
 from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup
@@ -54,9 +55,20 @@ def update(pkg_name, link):
 
 
 def main():
-    release = requests.get("https://api.github.com/repos/bjia56/scrypted-arlo-go/releases/latest").json()
+    api = "https://api.github.com/repos/bjia56/scrypted-arlo-go/releases/latest"
+    filter = None
+
+    if len(sys.argv) > 1:
+        api = f"https://api.github.com/repos/bjia56/scrypted-arlo-go/releases/tags/{sys.argv[1]}"
+
+    if len(sys.argv) > 2:
+        filter = sys.argv[2]
+
+    release = requests.get(api).json()
     for asset in release["assets"]:
         url = asset["browser_download_url"]
+        if filter is not None and filter not in url:
+            continue
         update("scrypted-arlo-go", url)
 
 
