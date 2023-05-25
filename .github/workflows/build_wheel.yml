@@ -3,25 +3,21 @@ name: Build
 on:
   push:
     branches: ["master"]
-    paths-ignore: ["pypi/**"]
+    paths-ignore: ["pypi/**", "scripts/generate_pypi_links.py"]
   pull_request:
-    paths-ignore: ["pypi/**"]
+    paths-ignore: ["pypi/**", "scripts/generate_pypi_links.py"]
   workflow_dispatch:
 
 jobs:
   build_macos:
     #if: false
-    name: MacOS 10.15 cp3${{ matrix.python3_version }} ${{ matrix.arch_cibw_go[0] }}
+    name: MacOS ${{ matrix.arch_cibw_go[0] }}
     strategy:
       fail-fast: false
       matrix:
-        python3_version: [ 7, 8, 9, 10, 11 ]
         arch_cibw_go:
           - [ "x86_64", "amd64" ]
           - [ "arm64", "arm64" ]
-        exclude:
-          - python3_version: 7
-            arch_cibw_go: [ "arm64", "arm64"]
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
@@ -37,26 +33,16 @@ jobs:
       - name: install goimports
         run: go install golang.org/x/tools/cmd/goimports@latest
 
-      - name: install python 3.${{ matrix.python3_version }}
-        run: |
-          brew install python@3.${{ matrix.python3_version }}
-          ln -s /usr/local/opt/python@3.${{ matrix.python3_version }}/bin/python3.${{ matrix.python3_version }}  /usr/local/bin/python_for_build
-          /usr/local/bin/python_for_build --version
-
-      - name: install cibuildwheel and pybindgen
-        run: /usr/local/bin/python_for_build -m pip install cibuildwheel==2.11.2 pybindgen
-
       - name: build wheels
-        run: /usr/local/bin/python_for_build -m cibuildwheel --output-dir wheelhouse
+        run: ./scripts/macos_build_wheels.sh
         env:
           CIBW_ARCHS: ${{ matrix.arch_cibw_go[0] }}
           PYTHON_BINARY_PATH: /usr/local/bin/python_for_build
-          CIBW_BUILD: "cp3${{ matrix.python3_version }}-*"
           CIBW_ENVIRONMENT: >
             PATH=$PATH:/usr/local/go/bin
             GOARCH=${{ matrix.arch_cibw_go[1] }}
             CGO_ENABLED=1
-            MACOSX_DEPLOYMENT_TARGET=10.15
+            MACOSX_DEPLOYMENT_TARGET=10.12
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
