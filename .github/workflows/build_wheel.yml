@@ -42,7 +42,7 @@ jobs:
             PATH=$PATH:/usr/local/go/bin
             GOARCH=${{ matrix.arch_cibw_go[1] }}
             CGO_ENABLED=1
-            MACOSX_DEPLOYMENT_TARGET=10.12
+            MACOSX_DEPLOYMENT_TARGET=10.13
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
