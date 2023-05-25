@@ -3,9 +3,9 @@ name: Build
 on:
   push:
     branches: ["master"]
-    paths-ignore: ["pypi/**", "scripts/generate_pypi_links.py"]
+    paths-ignore: ["pypi/**", "scripts/generate_pypi_links.py", "scripts/build_local.sh"]
   pull_request:
-    paths-ignore: ["pypi/**", "scripts/generate_pypi_links.py"]
+    paths-ignore: ["pypi/**", "scripts/generate_pypi_links.py", "scripts/build_local.sh"]
   workflow_dispatch:
 
 jobs:
