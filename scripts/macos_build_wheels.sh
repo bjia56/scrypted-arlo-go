@@ -2,7 +2,7 @@
 
 START_GROUP=0
 
-trap _end_group
+trap _end_group EXIT
 
 _end_group() (
     if [ "$START_GROUP" == "1" ]
