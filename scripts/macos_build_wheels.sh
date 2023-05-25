@@ -2,6 +2,8 @@
 
 START_GROUP=0
 
+trap _end_group
+
 _end_group() (
     if [ "$START_GROUP" == "1" ]
     then
