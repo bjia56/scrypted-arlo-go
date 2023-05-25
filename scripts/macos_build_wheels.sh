@@ -31,7 +31,7 @@ build_wheel() (
     CIBW_BUILD="cp3$PY_MINOR-*" /usr/local/bin/python_for_build -m cibuildwheel --output-dir wheelhouse
 )
 
-if [ "$CIBW_ARCHS" == "arm64" ]
+if [ "$CIBW_ARCHS" == "x86_64" ]
 then
     _start_group "Python 3.7"
     install_python 7
