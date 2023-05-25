@@ -34,8 +34,7 @@ jobs:
         run: go install golang.org/x/tools/cmd/goimports@latest
 
       - name: build wheels
-        run: ./builder/macos_build_wheels.sh
-        working-directory: ./scrypted_arlo_go
+        run: ./scrypted_arlo_go/builder/macos_build_wheels.sh
         env:
           CIBW_ARCHS: ${{ matrix.arch_cibw_go[0] }}
           PYTHON_BINARY_PATH: /usr/local/bin/python_for_build
@@ -47,7 +46,6 @@ jobs:
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
-        working-directory: ./scrypted_arlo_go
         with:
           name: wheels
           path: ./wheelhouse/*.whl
@@ -62,7 +60,8 @@ jobs:
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.11.2
-        working-directory: ./scrypted_arlo_go
+        with:
+          package-dir: ./scrypted_arlo_go
         env:
           CIBW_BUILD: "cp3*_x86_64"
           CIBW_SKIP: "cp36-* *-musllinux_x86_64"
@@ -78,7 +77,6 @@ jobs:
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
-        working-directory: ./scrypted_arlo_go
         with:
           name: wheels
           path: ./wheelhouse/*.whl
@@ -96,7 +94,8 @@ jobs:
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.11.2
-        working-directory: ./scrypted_arlo_go
+        with:
+          package-dir: ./scrypted_arlo_go
         env:
           CIBW_BUILD: "cp3*_aarch64"
           CIBW_SKIP: "cp36-* *-musllinux_aarch64"
@@ -112,7 +111,6 @@ jobs:
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
-        working-directory: ./scrypted_arlo_go
         with:
           name: wheels
           path: ./wheelhouse/*.whl
@@ -134,10 +132,9 @@ jobs:
 
       - name: Build wheels via Docker
         uses: docker/build-push-action@v3
-        working-directory: ./scrypted_arlo_go
         with:
-          context: .
-          file: ./builder/Dockerfile.armv7l
+          context: ./scrypted_arlo_go
+          file: ./scrypted_arlo_go/builder/Dockerfile.armv7l
           push: false
           platforms: linux/armhf
           tags: armv7l:latest
@@ -183,7 +180,8 @@ jobs:
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.11.2
-        working-directory: ./scrypted_arlo_go
+        with:
+          package-dir: ./scrypted_arlo_go
         env:
           CIBW_BUILD: "cp3*"
           CIBW_SKIP: "cp36-*"

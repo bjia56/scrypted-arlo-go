@@ -28,7 +28,7 @@ build_wheel() (
     ln -s /usr/local/opt/python@3.$PY_MINOR/bin/python3.$PY_MINOR  /usr/local/bin/python_for_build
     /usr/local/bin/python_for_build --version
     /usr/local/bin/python_for_build -m pip install cibuildwheel==2.11.2 pybindgen
-    CIBW_BUILD="cp3$PY_MINOR-*" /usr/local/bin/python_for_build -m cibuildwheel --output-dir wheelhouse
+    CIBW_BUILD="cp3$PY_MINOR-*" /usr/local/bin/python_for_build -m cibuildwheel --output-dir wheelhouse scrypted_arlo_go
 )
 
 if [ "$CIBW_ARCHS" == "x86_64" ]
