@@ -2,7 +2,10 @@ module scrypted_arlo_go
 
 go 1.19
 
-require github.com/pion/webrtc/v3 v3.2.6
+require (
+	github.com/jart/gosip v0.0.0-20220818224804-29801cedf805
+	github.com/pion/webrtc/v3 v3.2.6
+)
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect

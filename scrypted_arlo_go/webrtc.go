@@ -13,6 +13,7 @@ import (
 
 var UDP_PACKET_SIZE = 1600
 
+// type aliases for gopy to detect these structs
 type WebRTCConfiguration = webrtc.Configuration
 type WebRTCICEServer = webrtc.ICEServer
 type WebRTCSessionDescription = webrtc.SessionDescription
@@ -36,6 +37,7 @@ func WebRTCSessionDescriptionSDP(s WebRTCSessionDescription) string {
 }
 
 const (
+	// copy these values for gopy to detect these variables
 	WebRTCMimeTypeOpus = webrtc.MimeTypeOpus
 	WebRTCMimeTypePCMA = webrtc.MimeTypePCMA
 	WebRTCMimeTypePCMU = webrtc.MimeTypePCMU
@@ -43,9 +45,16 @@ const (
 )
 
 type WebRTCManager struct {
-	name                string
-	pc                  *webrtc.PeerConnection
-	audioRTP            net.Conn
+	// name to use in logging messages
+	name string
+
+	pc *webrtc.PeerConnection
+
+	// for receiving audio RTP packets
+	audioRTP net.Conn
+
+	// used to signal completion of ice gathering
+	// cache results in iceCandidates
 	iceCompleteSentinel <-chan struct{}
 	iceCandidates       []WebRTCICECandidate
 }

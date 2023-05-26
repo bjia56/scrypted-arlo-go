@@ -1,6 +1,11 @@
 #!/bin/bash
+PY_VER=$1
+if [ "$PY_VER" == "" ]
+then
+    PY_VER=39
+fi
 rm -rf wheelhouse
-export CIBW_BUILD="cp39*_x86_64"
+export CIBW_BUILD="cp$PY_VER*_x86_64"
 export CIBW_SKIP="cp36-* *-musllinux_x86_64"
 export CIBW_ARCHS="native"
 export CIBW_ENVIRONMENT="CGO_ENABLED=1 PATH=\$PATH:/usr/local/go/bin"
