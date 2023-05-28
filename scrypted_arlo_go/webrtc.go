@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	webrtc "github.com/pion/webrtc/v3"
+	"github.com/pion/webrtc/v3"
 )
 
 var UDP_PACKET_SIZE = 1600
@@ -59,12 +59,17 @@ type WebRTCManager struct {
 	iceCandidates       []WebRTCICECandidate
 }
 
-func NewWebRTCManager(name string, cfg WebRTCConfiguration) (*WebRTCManager, error) {
+func NewWebRTCManager(name string, cfg WebRTCConfiguration, apiSettings ...func(*webrtc.API)) (*WebRTCManager, error) {
 	mgr := WebRTCManager{
 		name: name,
 	}
 	var err error
-	mgr.pc, err = webrtc.NewPeerConnection(cfg)
+	if len(apiSettings) == 0 {
+		mgr.pc, err = webrtc.NewPeerConnection(cfg)
+	} else {
+		api := webrtc.NewAPI(apiSettings...)
+		mgr.pc, err = api.NewPeerConnection(cfg)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -76,6 +81,9 @@ func NewWebRTCManager(name string, cfg WebRTCConfiguration) (*WebRTCManager, err
 	})
 	mgr.pc.OnConnectionStateChange(func(s webrtc.PeerConnectionState) {
 		mgr.Println("OnConnectionStateChange %s", s.String())
+		if s == webrtc.PeerConnectionStateDisconnected {
+			mgr.Close()
+		}
 	})
 	mgr.pc.OnICEConnectionStateChange(func(is webrtc.ICEConnectionState) {
 		mgr.Println("OnICEConnectionStateChange %s", is.String())
