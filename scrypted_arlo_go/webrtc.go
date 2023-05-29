@@ -14,7 +14,6 @@ import (
 var UDP_PACKET_SIZE = 1600
 
 // type aliases for gopy to detect these structs
-type WebRTCConfiguration = webrtc.Configuration
 type WebRTCICEServer = webrtc.ICEServer
 type WebRTCSessionDescription = webrtc.SessionDescription
 type WebRTCICECandidateInit = webrtc.ICECandidateInit
@@ -59,17 +58,12 @@ type WebRTCManager struct {
 	iceCandidates       []WebRTCICECandidate
 }
 
-func NewWebRTCManager(name string, cfg WebRTCConfiguration, apiSettings ...func(*webrtc.API)) (*WebRTCManager, error) {
+func NewWebRTCManager(name string, iceServers []WebRTCICEServer) (*WebRTCManager, error) {
 	mgr := WebRTCManager{
 		name: name,
 	}
 	var err error
-	if len(apiSettings) == 0 {
-		mgr.pc, err = webrtc.NewPeerConnection(cfg)
-	} else {
-		api := webrtc.NewAPI(apiSettings...)
-		mgr.pc, err = api.NewPeerConnection(cfg)
-	}
+	mgr.pc, err = webrtc.NewPeerConnection(webrtc.Configuration{ICEServers: iceServers})
 	if err != nil {
 		return nil, err
 	}
@@ -114,6 +108,9 @@ func (mgr *WebRTCManager) initializeRTPListener(kind, codecMimeType string) (con
 	}
 
 	track, err := webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: codecMimeType}, kind, "pion-"+kind)
+	if err != nil {
+		return conn, 0, err
+	}
 
 	rtpSender, err := mgr.pc.AddTrack(track)
 	if err != nil {

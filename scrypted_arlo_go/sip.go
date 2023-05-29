@@ -16,15 +16,21 @@ import (
 	"golang.org/x/net/websocket"
 )
 
-var characters = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
-
 // https://stackoverflow.com/a/22892986
-func RandString(n int) string {
+func randString(n int, characters []rune) string {
 	b := make([]rune, n)
 	for i := range b {
 		b[i] = characters[rand.Intn(len(characters))]
 	}
 	return string(b)
+}
+
+func RandString(n int) string {
+	return randString(n, []rune("abcdefghijklmnopqrstuvwxyz0123456789"))
+}
+
+func RandDigits(n int) string {
+	return randString(n, []rune("0123456789"))
 }
 
 type Duration = time.Duration
@@ -161,10 +167,7 @@ type SIPWebRTCManager struct {
 }
 
 func NewSIPWebRTCManager(name string, iceServers []WebRTCICEServer, sipInfo SIPInfo) (*SIPWebRTCManager, error) {
-	webrtcSettings := webrtc.SettingEngine{}
-	webrtcSettings.SetICETimeouts(5*time.Second, 25*time.Second, 0)
-
-	wm, err := NewWebRTCManager(name, webrtc.Configuration{ICEServers: iceServers}, webrtc.WithSettingEngine(webrtcSettings))
+	wm, err := NewWebRTCManager(name, iceServers)
 	if err != nil {
 		return nil, err
 	}
@@ -213,7 +216,7 @@ func (sm *SIPWebRTCManager) connectWebsocket() error {
 }
 
 func (sm *SIPWebRTCManager) makeLocalSDP() (string, error) {
-	offer, err := sm.webrtc.CreateOffer()
+	offer, err := sm.webrtc.pc.CreateOffer(&webrtc.OfferOptions{OfferAnswerOptions: webrtc.OfferAnswerOptions{VoiceActivityDetection: true}})
 	if err != nil {
 		return "", fmt.Errorf("could not create offer sdp: %w", err)
 	}
@@ -243,10 +246,16 @@ func (sm *SIPWebRTCManager) makeInvite(sdp string, authNonce string) (*sip.Msg, 
 
 	invite := &sip.Msg{
 		CallID:     util.GenerateCallID(),
-		CSeq:       util.GenerateCSeq(),
+		CSeq:       1,
 		Method:     sip.MethodInvite,
 		CSeqMethod: sip.MethodInvite,
 		Request:    sm.sipInfo.to.Copy(),
+		Allow:      "ACK,CANCEL,INVITE,MESSAGE,BYE,OPTIONS,INFO,NOTIFY,REFER",
+		XHeader: &sip.XHeader{
+			Name:  "X-extension",
+			Value: []byte(sm.sipInfo.DeviceID + ";"),
+		},
+		Supported: "outbound",
 		Via: &sip.Via{
 			Host:      sm.randHost,
 			Param:     &sip.Param{Name: "branch", Value: util.GenerateBranch()},
@@ -337,10 +346,11 @@ func (sm *SIPWebRTCManager) makeBye(msg *sip.Msg) *sip.Msg {
 func (sm *SIPWebRTCManager) makeMessage(payload string) *sip.Msg {
 	message := &sip.Msg{
 		CallID:     util.GenerateCallID(),
-		CSeq:       util.GenerateCSeq(),
+		CSeq:       1,
 		Method:     sip.MethodMessage,
 		CSeqMethod: sip.MethodMessage,
 		Request:    sm.sipInfo.to.Copy(),
+		Supported:  "outbound",
 		Via: &sip.Via{
 			Host:      sm.randHost,
 			Param:     &sip.Param{Name: "branch", Value: util.GenerateBranch()},
@@ -405,8 +415,9 @@ func (sm *SIPWebRTCManager) Start() error {
 		return fmt.Errorf("audio rtp listener not initialized")
 	}
 
-	err := sm.connectWebsocket()
-	if err != nil {
+	var err error
+
+	if err = sm.connectWebsocket(); err != nil {
 		return fmt.Errorf("could not connect websocket: %w", err)
 	}
 
@@ -420,8 +431,7 @@ func (sm *SIPWebRTCManager) Start() error {
 		return fmt.Errorf("could not create invite: %w", err)
 	}
 
-	sm.writeWebsocket(invite)
-	if err != nil {
+	if err = sm.writeWebsocket(invite); err != nil {
 		return fmt.Errorf("could not send invite over websocket: %w", err)
 	}
 
@@ -458,8 +468,7 @@ func (sm *SIPWebRTCManager) Start() error {
 		invite.ProxyAuthorization = authHeader.String()
 		invite.CSeq++
 
-		sm.writeWebsocket(invite)
-		if err != nil {
+		if err = sm.writeWebsocket(invite); err != nil {
 			return fmt.Errorf("could not send invite over websocket: %w", err)
 		}
 
@@ -484,6 +493,10 @@ func (sm *SIPWebRTCManager) Start() error {
 		return fmt.Errorf("unexpected invite response content type %q", inviteResponse.Payload.ContentType())
 	}
 
+	if err = sm.sendAck(inviteResponse); err != nil {
+		return fmt.Errorf("could not send ack: %w", err)
+	}
+
 	remoteSDP := string(inviteResponse.Payload.Data())
 	if !strings.Contains(remoteSDP, "a=mid:") {
 		remoteSDP += "a=mid:0\r\n"
@@ -500,9 +513,13 @@ func (sm *SIPWebRTCManager) Start() error {
 	}
 
 	startTalk := sm.makeMessage(fmt.Sprintf("deviceId:%s;startTalk", sm.sipInfo.DeviceID))
-	err = sm.writeWebsocket(startTalk)
-	if err != nil {
+	if err = sm.writeWebsocket(startTalk); err != nil {
 		return fmt.Errorf("could not send startTalk over websocket: %w", err)
+	}
+
+	keepAlive := sm.makeMessage("keepAlive")
+	if err = sm.writeWebsocket(keepAlive); err != nil {
+		return fmt.Errorf("could not send keepAlive over websocket: %w", err)
 	}
 
 	startTalkResponse, err := sm.readWebsocket()
@@ -513,12 +530,21 @@ func (sm *SIPWebRTCManager) Start() error {
 		return fmt.Errorf("could not parse 202 accepted: %w", err)
 	}
 
+	keepAliveResponse, err := sm.readWebsocket()
+	if err != nil {
+		return fmt.Errorf("could not read keepAlive response: %w", err)
+	}
+	if err = sm.verify202Accepted(keepAliveResponse); err != nil {
+		return fmt.Errorf("could not parse 202 accepted: %w", err)
+	}
+
 	// keepAlive loop
 	go func() {
 		for {
+			time.Sleep(30 * time.Second)
+
 			keepAlive := sm.makeMessage("keepAlive")
-			err = sm.writeWebsocket(keepAlive)
-			if err != nil {
+			if err = sm.writeWebsocket(keepAlive); err != nil {
 				sm.Println("Could not send keepAlive over websocket: %s", err)
 				return
 			}
@@ -526,11 +552,9 @@ func (sm *SIPWebRTCManager) Start() error {
 			keepAliveResponse, err := sm.readWebsocket()
 			if err != nil {
 				sm.Println("Could not read keepAlive response: %s", err)
-			} else if err = sm.verify200OK(keepAliveResponse); err != nil {
-				sm.Println("Could not parse 200 ok: %s", err)
+			} else if err = sm.verify202Accepted(keepAliveResponse); err != nil {
+				sm.Println("Could not parse 202 accepted: %s", err)
 			}
-
-			time.Sleep(30 * time.Second)
 		}
 	}()
 
