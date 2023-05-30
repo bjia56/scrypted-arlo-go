@@ -175,11 +175,20 @@ func NewSIPWebRTCManager(name string, iceServers []WebRTCICEServer, sipInfo SIPI
 	if sipInfo.TimeoutSeconds <= 0 {
 		sipInfo.TimeoutSeconds = 5
 	}
+
 	sm := &SIPWebRTCManager{
 		webrtc:           wm,
 		sipInfo:          sipInfo,
 		inviteSIPMsgLock: &sync.Mutex{},
 		randHost:         RandString(12) + ".invalid",
+	}
+	sm.sipInfo.from, err = sip.ParseURI([]byte(sm.sipInfo.CallerURI))
+	if err != nil {
+		return nil, fmt.Errorf("could not parse caller uri: %w", err)
+	}
+	sm.sipInfo.to, err = sip.ParseURI([]byte(sm.sipInfo.CalleeURI))
+	if err != nil {
+		return nil, fmt.Errorf("could not parse callee uri: %w", err)
 	}
 
 	wm.pc.OnConnectionStateChange(func(s webrtc.PeerConnectionState) {
@@ -232,18 +241,7 @@ func (sm *SIPWebRTCManager) makeLocalSDP() (string, error) {
 	return offer.SDP, nil
 }
 
-func (sm *SIPWebRTCManager) makeInvite(sdp string, authNonce string) (*sip.Msg, error) {
-	var err error
-
-	sm.sipInfo.from, err = sip.ParseURI([]byte(sm.sipInfo.CallerURI))
-	if err != nil {
-		return nil, fmt.Errorf("could not parse caller uri: %w", err)
-	}
-	sm.sipInfo.to, err = sip.ParseURI([]byte(sm.sipInfo.CalleeURI))
-	if err != nil {
-		return nil, fmt.Errorf("could not parse callee uri: %w", err)
-	}
-
+func (sm *SIPWebRTCManager) makeInvite(sdp string) *sip.Msg {
 	invite := &sip.Msg{
 		CallID:     util.GenerateCallID(),
 		CSeq:       1,
@@ -282,15 +280,11 @@ func (sm *SIPWebRTCManager) makeInvite(sdp string, authNonce string) (*sip.Msg, 
 		},
 	}
 
-	if authNonce != "" {
-		invite.ProxyAuthenticate = ""
-	}
-
 	sm.inviteSIPMsgLock.Lock()
 	defer sm.inviteSIPMsgLock.Unlock()
 	sm.inviteSIPMsg = invite
 
-	return invite, nil
+	return invite
 }
 
 func (sm *SIPWebRTCManager) verify100Trying(msg *sip.Msg) error {
@@ -426,11 +420,7 @@ func (sm *SIPWebRTCManager) Start() error {
 		return fmt.Errorf("could not create local sdp: %w", err)
 	}
 
-	invite, err := sm.makeInvite(sdp, "")
-	if err != nil {
-		return fmt.Errorf("could not create invite: %w", err)
-	}
-
+	invite := sm.makeInvite(sdp)
 	if err = sm.writeWebsocket(invite); err != nil {
 		return fmt.Errorf("could not send invite over websocket: %w", err)
 	}
@@ -497,21 +487,6 @@ func (sm *SIPWebRTCManager) Start() error {
 		return fmt.Errorf("could not send ack: %w", err)
 	}
 
-	remoteSDP := string(inviteResponse.Payload.Data())
-	if !strings.Contains(remoteSDP, "a=mid:") {
-		remoteSDP += "a=mid:0\r\n"
-	}
-	if !strings.Contains(remoteSDP, "a=recvonly") {
-		remoteSDP += "a=recvonly\r\n"
-	}
-	err = sm.webrtc.SetRemoteDescription(WebRTCSessionDescription{
-		Type: webrtc.SDPTypeAnswer,
-		SDP:  remoteSDP,
-	})
-	if err != nil {
-		return fmt.Errorf("could not set remote description: %w", err)
-	}
-
 	startTalk := sm.makeMessage(fmt.Sprintf("deviceId:%s;startTalk", sm.sipInfo.DeviceID))
 	if err = sm.writeWebsocket(startTalk); err != nil {
 		return fmt.Errorf("could not send startTalk over websocket: %w", err)
@@ -536,6 +511,21 @@ func (sm *SIPWebRTCManager) Start() error {
 	}
 	if err = sm.verify202Accepted(keepAliveResponse); err != nil {
 		return fmt.Errorf("could not parse 202 accepted: %w", err)
+	}
+
+	remoteSDP := string(inviteResponse.Payload.Data())
+	if !strings.Contains(remoteSDP, "a=mid:") {
+		remoteSDP += "a=mid:0\r\n"
+	}
+	if !strings.Contains(remoteSDP, "a=sendrecv") {
+		remoteSDP += "a=sendrecv\r\n"
+	}
+	err = sm.webrtc.SetRemoteDescription(WebRTCSessionDescription{
+		Type: webrtc.SDPTypeAnswer,
+		SDP:  remoteSDP,
+	})
+	if err != nil {
+		return fmt.Errorf("could not set remote description: %w", err)
 	}
 
 	// keepAlive loop

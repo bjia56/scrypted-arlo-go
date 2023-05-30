@@ -62,6 +62,8 @@ func NewWebRTCManager(name string, iceServers []WebRTCICEServer) (*WebRTCManager
 	mgr := WebRTCManager{
 		name: name,
 	}
+	mgr.Println("Library version %s built at %s", Version, parsedBuildTime.String())
+
 	var err error
 	mgr.pc, err = webrtc.NewPeerConnection(webrtc.Configuration{ICEServers: iceServers})
 	if err != nil {
@@ -82,6 +84,20 @@ func NewWebRTCManager(name string, iceServers []WebRTCICEServer) (*WebRTCManager
 	mgr.pc.OnICEConnectionStateChange(func(is webrtc.ICEConnectionState) {
 		mgr.Println("OnICEConnectionStateChange %s", is.String())
 	})
+	mgr.pc.OnTrack(func(tr *webrtc.TrackRemote, r *webrtc.RTPReceiver) {
+		mgr.Println("Remote sent us a track we will ignore: %s", tr.Codec().MimeType)
+		// we don't expect any useful audio to come back over the channel,
+		// so just read it and move on
+		go func() {
+			rtcpBuf := make([]byte, 1500)
+			for {
+				if _, _, rtcpErr := tr.Read(rtcpBuf); rtcpErr != nil {
+					return
+				}
+			}
+		}()
+	})
+
 	return &mgr, nil
 }
 
@@ -107,7 +123,7 @@ func (mgr *WebRTCManager) initializeRTPListener(kind, codecMimeType string) (con
 		return conn, 0, err
 	}
 
-	track, err := webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: codecMimeType}, kind, "pion-"+kind)
+	track, err := webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: codecMimeType}, RandString(15), RandString(15))
 	if err != nil {
 		return conn, 0, err
 	}
