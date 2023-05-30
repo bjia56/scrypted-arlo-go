@@ -17,7 +17,7 @@ import (
 )
 
 // https://stackoverflow.com/a/22892986
-func randString(n int, characters []rune) string {
+func randStringImpl(n int, characters []rune) string {
 	b := make([]rune, n)
 	for i := range b {
 		b[i] = characters[rand.Intn(len(characters))]
@@ -25,12 +25,16 @@ func randString(n int, characters []rune) string {
 	return string(b)
 }
 
-func RandString(n int) string {
-	return randString(n, []rune("abcdefghijklmnopqrstuvwxyz0123456789"))
+func randString(n int) string {
+	return randStringImpl(n, []rune("abcdefghijklmnopqrstuvwxyz0123456789"))
 }
 
-func RandDigits(n int) string {
-	return randString(n, []rune("0123456789"))
+func randDigits(n int) string {
+	return randStringImpl(n, []rune("0123456789"))
+}
+
+func genBranch() string {
+	return "z9hG4bK" + randDigits(7)
 }
 
 type Duration = time.Duration
@@ -52,13 +56,15 @@ type SIPInfo struct {
 
 	// websocket information
 	WebsocketURI     string
-	WebsocketHeaders http.Header
+	WebsocketHeaders HeadersMap
 	WebsocketOrigin  string
 }
 
-func ToHTTPHeaders(headers map[string]string) http.Header {
+type HeadersMap map[string]string
+
+func (h HeadersMap) toHTTPHeaders() http.Header {
 	result := http.Header{}
-	for k, v := range headers {
+	for k, v := range h {
 		result[k] = []string{v}
 	}
 	return result
@@ -162,8 +168,8 @@ type SIPWebRTCManager struct {
 	wsConn   *websocket.Conn
 	randHost string
 
-	inviteSIPMsg     *sip.Msg
-	inviteSIPMsgLock *sync.Mutex
+	inviteResp        *sip.Msg
+	inviteRespMsgLock *sync.Mutex
 }
 
 func NewSIPWebRTCManager(name string, iceServers []WebRTCICEServer, sipInfo SIPInfo) (*SIPWebRTCManager, error) {
@@ -177,10 +183,10 @@ func NewSIPWebRTCManager(name string, iceServers []WebRTCICEServer, sipInfo SIPI
 	}
 
 	sm := &SIPWebRTCManager{
-		webrtc:           wm,
-		sipInfo:          sipInfo,
-		inviteSIPMsgLock: &sync.Mutex{},
-		randHost:         RandString(12) + ".invalid",
+		webrtc:            wm,
+		sipInfo:           sipInfo,
+		inviteRespMsgLock: &sync.Mutex{},
+		randHost:          randString(12) + ".invalid",
 	}
 	sm.sipInfo.from, err = sip.ParseURI([]byte(sm.sipInfo.CallerURI))
 	if err != nil {
@@ -213,7 +219,7 @@ func (sm *SIPWebRTCManager) connectWebsocket() error {
 	if err != nil {
 		return fmt.Errorf("could not create websocket config: %w", err)
 	}
-	cfg.Header = sm.sipInfo.WebsocketHeaders
+	cfg.Header = sm.sipInfo.WebsocketHeaders.toHTTPHeaders()
 	cfg.Protocol = []string{"sip"}
 
 	sm.wsConn, err = websocket.DialConfig(cfg)
@@ -256,7 +262,7 @@ func (sm *SIPWebRTCManager) makeInvite(sdp string) *sip.Msg {
 		Supported: "outbound",
 		Via: &sip.Via{
 			Host:      sm.randHost,
-			Param:     &sip.Param{Name: "branch", Value: util.GenerateBranch()},
+			Param:     &sip.Param{Name: "branch", Value: genBranch()},
 			Transport: "WSS",
 		},
 		From: &sip.Addr{
@@ -269,7 +275,7 @@ func (sm *SIPWebRTCManager) makeInvite(sdp string) *sip.Msg {
 		Contact: &sip.Addr{
 			Uri: &sip.URI{
 				Scheme: "sip",
-				User:   RandString(8),
+				User:   randString(8),
 				Host:   sm.randHost + ";transport=ws;ob",
 			},
 		},
@@ -279,10 +285,6 @@ func (sm *SIPWebRTCManager) makeInvite(sdp string) *sip.Msg {
 			D: []byte(sdp),
 		},
 	}
-
-	sm.inviteSIPMsgLock.Lock()
-	defer sm.inviteSIPMsgLock.Unlock()
-	sm.inviteSIPMsg = invite
 
 	return invite
 }
@@ -316,13 +318,20 @@ func (sm *SIPWebRTCManager) verify407ProxyAuthenticationRequired(msg *sip.Msg) e
 }
 
 func (sm *SIPWebRTCManager) makeAck(msg *sip.Msg) *sip.Msg {
+	via := msg.Via.Copy()
+	via.Param = &sip.Param{Name: "branch", Value: genBranch()}
+
+	route := msg.RecordRoute.Copy()
+	route = route.Reversed()
+
 	return &sip.Msg{
 		CallID:     msg.CallID,
 		CSeq:       msg.CSeq,
 		Method:     sip.MethodAck,
 		CSeqMethod: sip.MethodAck,
 		Request:    sm.sipInfo.to.Copy(),
-		Via:        msg.Via.Copy(),
+		Route:      route,
+		Via:        via,
 		From:       msg.From.Copy(),
 		To:         msg.To.Copy(),
 		UserAgent:  sm.sipInfo.UserAgent,
@@ -347,7 +356,7 @@ func (sm *SIPWebRTCManager) makeMessage(payload string) *sip.Msg {
 		Supported:  "outbound",
 		Via: &sip.Via{
 			Host:      sm.randHost,
-			Param:     &sip.Param{Name: "branch", Value: util.GenerateBranch()},
+			Param:     &sip.Param{Name: "branch", Value: genBranch()},
 			Transport: "WSS",
 		},
 		From: &sip.Addr{
@@ -451,11 +460,12 @@ func (sm *SIPWebRTCManager) Start() error {
 		// this is what it looks like in an arlo web negotiation
 		authHeader.Params["username"] = sm.sipInfo.from.User
 		authHeader.Params["uri"] = sm.sipInfo.CalleeURI
-		authHeader.Params["cnonce"] = RandString(12)
+		authHeader.Params["cnonce"] = randString(12)
 		authHeader.Params["nc"] = "00000001"
 		authHeader.UpdateResponseDigest(sip.MethodInvite, sm.sipInfo.Password)
 
 		invite.ProxyAuthorization = authHeader.String()
+		invite.Via.Param = &sip.Param{Name: "branch", Value: genBranch()}
 		invite.CSeq++
 
 		if err = sm.writeWebsocket(invite); err != nil {
@@ -478,6 +488,10 @@ func (sm *SIPWebRTCManager) Start() error {
 	if err = sm.verify200OK(inviteResponse); err != nil {
 		return fmt.Errorf("could not parse 200 ok: %w", err)
 	}
+
+	sm.inviteRespMsgLock.Lock()
+	sm.inviteResp = inviteResponse
+	sm.inviteRespMsgLock.Unlock()
 
 	if inviteResponse.Payload.ContentType() != "application/sdp" {
 		return fmt.Errorf("unexpected invite response content type %q", inviteResponse.Payload.ContentType())
@@ -556,17 +570,17 @@ func (sm *SIPWebRTCManager) Start() error {
 func (sm *SIPWebRTCManager) Close() {
 	sm.webrtc.Close()
 	if sm.wsConn != nil {
-		sm.inviteSIPMsgLock.Lock()
-		defer sm.inviteSIPMsgLock.Unlock()
+		sm.inviteRespMsgLock.Lock()
+		defer sm.inviteRespMsgLock.Unlock()
 
-		if sm.inviteSIPMsg != nil {
-			bye := sm.makeBye(sm.inviteSIPMsg)
+		if sm.inviteResp != nil {
+			bye := sm.makeBye(sm.inviteResp)
 			sm.writeWebsocket(bye)
 		}
 
 		sm.wsConn.Close()
 	}
-	sm.inviteSIPMsg = nil
+	sm.inviteResp = nil
 	sm.wsConn = nil
 }
 

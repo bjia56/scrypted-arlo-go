@@ -62,10 +62,16 @@ func NewWebRTCManager(name string, iceServers []WebRTCICEServer) (*WebRTCManager
 	mgr := WebRTCManager{
 		name: name,
 	}
-	mgr.Println("Library version %s built at %s", Version, parsedBuildTime.String())
+	mgr.Println("Library version %s built at %s", version, parsedBuildTime.String())
 
 	var err error
-	mgr.pc, err = webrtc.NewPeerConnection(webrtc.Configuration{ICEServers: iceServers})
+	mgr.pc, err = webrtc.NewPeerConnection(webrtc.Configuration{
+		ICEServers:           iceServers,
+		ICETransportPolicy:   webrtc.ICETransportPolicyAll,
+		BundlePolicy:         webrtc.BundlePolicyBalanced,
+		RTCPMuxPolicy:        webrtc.RTCPMuxPolicyRequire,
+		ICECandidatePoolSize: 0,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +129,7 @@ func (mgr *WebRTCManager) initializeRTPListener(kind, codecMimeType string) (con
 		return conn, 0, err
 	}
 
-	track, err := webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: codecMimeType}, RandString(15), RandString(15))
+	track, err := webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: codecMimeType}, randString(15), randString(15))
 	if err != nil {
 		return conn, 0, err
 	}

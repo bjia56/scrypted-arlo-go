@@ -7,6 +7,8 @@ require (
 	github.com/pion/webrtc/v3 v3.2.8
 )
 
+replace github.com/jart/gosip v0.0.0-20220818224804-29801cedf805 => github.com/bjia56/gosip v0.0.0-20230530030711-809ff19752b9
+
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/google/uuid v1.3.0 // indirect
