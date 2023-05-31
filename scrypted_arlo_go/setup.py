@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 import subprocess
 import sys
 from distutils.core import Extension
@@ -34,6 +35,9 @@ class CustomBuildExt(build_ext):
         go_env = json.loads(subprocess.check_output(["go", "env", "-json"]).decode("utf-8").strip())
 
         destination = os.path.dirname(os.path.abspath(self.get_ext_fullpath(ext.name))) + f"/{PACKAGE_NAME}"
+        if os.path.isdir(destination):
+            # clean up destination in case it has existing build artifacts
+            shutil.rmtree(destination)
 
         env = {
             "PATH": bin_path,
@@ -75,7 +79,7 @@ class CustomBuildExt(build_ext):
 
 setuptools.setup(
     name=PACKAGE_NAME,
-    version="0.1.0",
+    version="0.1.1",
     author="Brett Jia",
     author_email="dev.bjia56@gmail.com",
     description="Go extensions for @scrypted/arlo",
