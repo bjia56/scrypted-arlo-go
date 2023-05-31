@@ -8,12 +8,12 @@ import (
 	"strconv"
 	"strings"
 
-	webrtc "github.com/pion/webrtc/v3"
+	"github.com/pion/webrtc/v3"
 )
 
 var UDP_PACKET_SIZE = 1600
 
-type WebRTCConfiguration = webrtc.Configuration
+// type aliases for gopy to detect these structs
 type WebRTCICEServer = webrtc.ICEServer
 type WebRTCSessionDescription = webrtc.SessionDescription
 type WebRTCICECandidateInit = webrtc.ICECandidateInit
@@ -36,6 +36,7 @@ func WebRTCSessionDescriptionSDP(s WebRTCSessionDescription) string {
 }
 
 const (
+	// copy these values for gopy to detect these variables
 	WebRTCMimeTypeOpus = webrtc.MimeTypeOpus
 	WebRTCMimeTypePCMA = webrtc.MimeTypePCMA
 	WebRTCMimeTypePCMU = webrtc.MimeTypePCMU
@@ -43,19 +44,34 @@ const (
 )
 
 type WebRTCManager struct {
-	name                string
-	pc                  *webrtc.PeerConnection
-	audioRTP            net.Conn
+	// name to use in logging messages
+	name string
+
+	pc *webrtc.PeerConnection
+
+	// for receiving audio RTP packets
+	audioRTP net.Conn
+
+	// used to signal completion of ice gathering
+	// cache results in iceCandidates
 	iceCompleteSentinel <-chan struct{}
 	iceCandidates       []WebRTCICECandidate
 }
 
-func NewWebRTCManager(name string, cfg WebRTCConfiguration) (*WebRTCManager, error) {
+func NewWebRTCManager(name string, iceServers []WebRTCICEServer) (*WebRTCManager, error) {
 	mgr := WebRTCManager{
 		name: name,
 	}
+	mgr.Println("Library version %s built at %s", version, parsedBuildTime.String())
+
 	var err error
-	mgr.pc, err = webrtc.NewPeerConnection(cfg)
+	mgr.pc, err = webrtc.NewPeerConnection(webrtc.Configuration{
+		ICEServers:           iceServers,
+		ICETransportPolicy:   webrtc.ICETransportPolicyAll,
+		BundlePolicy:         webrtc.BundlePolicyBalanced,
+		RTCPMuxPolicy:        webrtc.RTCPMuxPolicyRequire,
+		ICECandidatePoolSize: 0,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -67,10 +83,27 @@ func NewWebRTCManager(name string, cfg WebRTCConfiguration) (*WebRTCManager, err
 	})
 	mgr.pc.OnConnectionStateChange(func(s webrtc.PeerConnectionState) {
 		mgr.Println("OnConnectionStateChange %s", s.String())
+		if s == webrtc.PeerConnectionStateDisconnected {
+			mgr.Close()
+		}
 	})
 	mgr.pc.OnICEConnectionStateChange(func(is webrtc.ICEConnectionState) {
 		mgr.Println("OnICEConnectionStateChange %s", is.String())
 	})
+	mgr.pc.OnTrack(func(tr *webrtc.TrackRemote, r *webrtc.RTPReceiver) {
+		mgr.Println("Remote sent us a track we will ignore: %s", tr.Codec().MimeType)
+		// we don't expect any useful audio to come back over the channel,
+		// so just read it and move on
+		go func() {
+			rtcpBuf := make([]byte, 1500)
+			for {
+				if _, _, rtcpErr := tr.Read(rtcpBuf); rtcpErr != nil {
+					return
+				}
+			}
+		}()
+	})
+
 	return &mgr, nil
 }
 
@@ -96,7 +129,10 @@ func (mgr *WebRTCManager) initializeRTPListener(kind, codecMimeType string) (con
 		return conn, 0, err
 	}
 
-	track, err := webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: codecMimeType}, kind, "pion-"+kind)
+	track, err := webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: codecMimeType}, randString(15), randString(15))
+	if err != nil {
+		return conn, 0, err
+	}
 
 	rtpSender, err := mgr.pc.AddTrack(track)
 	if err != nil {

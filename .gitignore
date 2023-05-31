@@ -1,1 +1,6 @@
 wheelhouse
+test.py
+Pipfile*
+*test.go
+VERSION.txt
+BUILDTIME.txt
