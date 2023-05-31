@@ -1,5 +1,9 @@
 github.com/bjia56/gosip v0.0.0-20230530030711-809ff19752b9 h1:h1XcqFKg8o4qPK8J4+KC8V/DuSMLo4dU8tARPyPPPvs=
 github.com/bjia56/gosip v0.0.0-20230530030711-809ff19752b9/go.mod h1:Xt5nyIcdK7MTYXExLGM/OLLP81Cd/0DPaQlhakk2Ep0=
+github.com/bjia56/gosip v0.0.0-20230530220730-b83efa6a64bd h1:yHUm+Tyybrvc5/BIP5naLrTLKaid2Yxctq38eg8sV4w=
+github.com/bjia56/gosip v0.0.0-20230530220730-b83efa6a64bd/go.mod h1:Xt5nyIcdK7MTYXExLGM/OLLP81Cd/0DPaQlhakk2Ep0=
+github.com/bjia56/gosip v0.0.0-20230531011948-778d4f1fb10d h1:fPK0sIL043Zqq/P+JsX+2wXO4K59/hrF0KIZlWZqcxY=
+github.com/bjia56/gosip v0.0.0-20230531011948-778d4f1fb10d/go.mod h1:Xt5nyIcdK7MTYXExLGM/OLLP81Cd/0DPaQlhakk2Ep0=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

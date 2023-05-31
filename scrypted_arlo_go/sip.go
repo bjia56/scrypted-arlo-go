@@ -262,6 +262,7 @@ func (sm *SIPWebRTCManager) makeInvite(sdp string) *sip.Msg {
 		Supported: "outbound",
 		Via: &sip.Via{
 			Host:      sm.randHost,
+			Port:      5060,
 			Param:     &sip.Param{Name: "branch", Value: genBranch()},
 			Transport: "WSS",
 		},
@@ -320,6 +321,7 @@ func (sm *SIPWebRTCManager) verify407ProxyAuthenticationRequired(msg *sip.Msg) e
 func (sm *SIPWebRTCManager) makeAck(msg *sip.Msg) *sip.Msg {
 	via := msg.Via.Copy()
 	via.Param = &sip.Param{Name: "branch", Value: genBranch()}
+	via.Port = 5060 // hack to stop port from being serialized
 
 	route := msg.RecordRoute.Copy()
 	route = route.Reversed()
@@ -334,6 +336,7 @@ func (sm *SIPWebRTCManager) makeAck(msg *sip.Msg) *sip.Msg {
 		Via:        via,
 		From:       msg.From.Copy(),
 		To:         msg.To.Copy(),
+		Supported:  "outbound",
 		UserAgent:  sm.sipInfo.UserAgent,
 	}
 }
@@ -356,6 +359,7 @@ func (sm *SIPWebRTCManager) makeMessage(payload string) *sip.Msg {
 		Supported:  "outbound",
 		Via: &sip.Via{
 			Host:      sm.randHost,
+			Port:      5060,
 			Param:     &sip.Param{Name: "branch", Value: genBranch()},
 			Transport: "WSS",
 		},
