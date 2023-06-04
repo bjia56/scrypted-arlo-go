@@ -7,6 +7,7 @@ on:
   pull_request:
     paths: ["scrypted_arlo_go/**", ".github/workflows/build_wheel.yml"]
   workflow_dispatch:
+  workflow_call:
 
 jobs:
   build_macos:
