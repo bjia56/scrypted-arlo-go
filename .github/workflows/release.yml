@@ -71,6 +71,10 @@ jobs:
         with:
           python-version: '3.9'
 
+      - name: Install Python dependencies
+        run: |
+          pip install requests beautifulsoup4
+
       - name: Update PyPI
         run: python ./scripts/generate_pypi_links.py ${{ inputs.version }}
 
