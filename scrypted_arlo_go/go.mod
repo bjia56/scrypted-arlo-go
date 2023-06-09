@@ -3,9 +3,8 @@ module scrypted_arlo_go
 go 1.19
 
 require (
-	github.com/CUCyber/ja3transport v0.0.0-20201031204932-8a22ac8ab5d7
 	github.com/jart/gosip v0.0.0-20220818224804-29801cedf805
-	github.com/pion/webrtc/v3 v3.2.8
+	github.com/pion/webrtc/v3 v3.2.10
 )
 
 replace github.com/jart/gosip v0.0.0-20220818224804-29801cedf805 => github.com/bjia56/gosip v0.0.0-20230531011948-778d4f1fb10d
@@ -15,7 +14,7 @@ require (
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/pion/datachannel v1.5.5 // indirect
 	github.com/pion/dtls/v2 v2.2.7 // indirect
-	github.com/pion/ice/v2 v2.3.6 // indirect
+	github.com/pion/ice/v2 v2.3.7 // indirect
 	github.com/pion/interceptor v0.1.17 // indirect
 	github.com/pion/logging v0.2.2 // indirect
 	github.com/pion/mdns v0.0.7 // indirect
@@ -29,8 +28,7 @@ require (
 	github.com/pion/transport/v2 v2.2.1 // indirect
 	github.com/pion/turn/v2 v2.1.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/refraction-networking/utls v0.0.0-20200820030103-33a29038e742 // indirect
-	github.com/stretchr/testify v1.8.3 // indirect
+	github.com/stretchr/testify v1.8.4 // indirect
 	golang.org/x/crypto v0.9.0 // indirect
 	golang.org/x/net v0.10.0
 	golang.org/x/sys v0.8.0 // indirect
