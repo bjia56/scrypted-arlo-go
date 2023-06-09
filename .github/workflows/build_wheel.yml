@@ -149,8 +149,6 @@ jobs:
           push: false
           platforms: linux/armhf
           tags: armv7l:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=min
           load: true
 
       - name: Extract output
