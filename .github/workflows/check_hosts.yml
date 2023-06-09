@@ -1,4 +1,4 @@
-name: Build
+name: Check hosts
 
 on:
   push:
