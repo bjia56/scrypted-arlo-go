@@ -102,7 +102,7 @@ jobs:
         with:
           package-dir: ./scrypted_arlo_go
         env:
-          CIBW_BUILD: "cp3${{ matrix.python3_version }}_aarch64"
+          CIBW_BUILD: "cp3${{ matrix.python3_version }}*_aarch64"
           CIBW_SKIP: "cp36-* *-musllinux_aarch64"
           CIBW_ARCHS: "aarch64"
           CIBW_ENVIRONMENT: >
