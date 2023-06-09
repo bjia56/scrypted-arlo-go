@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -80,10 +81,16 @@ func main() {
 			continue
 		}
 
+		if err := verifyRemoteAuthEndpoint(ip); err != nil {
+			log("ip %s auth endpoint cannot be used: %s", ip, err)
+			continue
+		}
+
 		ips = append(ips, ip)
 	}
 
 	log("Writing results")
+	log("%v", results)
 	enc := json.NewEncoder(os.Stdout)
 	err = enc.Encode(ips)
 	if err != nil {
@@ -110,4 +117,28 @@ func verifyRemoteCert(ip string) error {
 	}
 
 	return fmt.Errorf("remote certs do not match hostname")
+}
+
+func verifyRemoteAuthEndpoint(ip string) error {
+	t := http.Transport{
+		TLSClientConfig: &tls.Config{
+			ServerName: HOST,
+		},
+		TLSHandshakeTimeout: 10 * time.Second,
+	}
+	c := http.Client{
+		Transport: &t,
+		Timeout:   5 * time.Second,
+	}
+
+	resp, err := c.Post(fmt.Sprintf("https://%s/api/auth", ip), "", nil)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode >= 300 {
+		return fmt.Errorf("unexpected status code %d", resp.StatusCode)
+	}
+
+	return nil
 }
