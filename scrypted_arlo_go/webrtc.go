@@ -44,10 +44,8 @@ const (
 )
 
 type WebRTCManager struct {
-	// name to use in logging messages
-	name string
-
-	pc *webrtc.PeerConnection
+	pc     *webrtc.PeerConnection
+	logger *TCPLogger
 
 	// for receiving audio RTP packets
 	audioRTP net.Conn
@@ -58,13 +56,21 @@ type WebRTCManager struct {
 	iceCandidates       []WebRTCICECandidate
 }
 
-func NewWebRTCManager(name string, iceServers []WebRTCICEServer) (*WebRTCManager, error) {
+func NewWebRTCManager(loggerPort int, iceServers []WebRTCICEServer) (*WebRTCManager, error) {
+	return newWebRTCManager(loggerPort, iceServers, "WebRTCManager")
+}
+
+func newWebRTCManager(loggerPort int, iceServers []WebRTCICEServer, name string) (*WebRTCManager, error) {
+	logger, err := NewTCPLogger(loggerPort, name)
+	if err != nil {
+		return nil, err
+	}
+
 	mgr := WebRTCManager{
-		name: name,
+		logger: logger,
 	}
 	mgr.Println("Library version %s built at %s", version, parsedBuildTime.String())
 
-	var err error
 	mgr.pc, err = webrtc.NewPeerConnection(webrtc.Configuration{
 		ICEServers:           iceServers,
 		ICETransportPolicy:   webrtc.ICETransportPolicyAll,
@@ -108,7 +114,9 @@ func NewWebRTCManager(name string, iceServers []WebRTCICEServer) (*WebRTCManager
 }
 
 func (mgr *WebRTCManager) Printf(msg string, args ...any) {
-	fmt.Printf(fmt.Sprintf("[%s] ", mgr.name)+msg, args...)
+	if mgr.logger != nil {
+		mgr.logger.Send(fmt.Sprintf(msg, args...))
+	}
 }
 
 func (mgr *WebRTCManager) Println(msg string, args ...any) {
@@ -247,5 +255,9 @@ func (mgr *WebRTCManager) Close() {
 	if mgr.pc != nil {
 		mgr.pc.Close()
 		mgr.pc = nil
+	}
+	if mgr.logger != nil {
+		mgr.logger.Close()
+		mgr.logger = nil
 	}
 }

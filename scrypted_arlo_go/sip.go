@@ -172,8 +172,8 @@ type SIPWebRTCManager struct {
 	inviteRespMsgLock *sync.Mutex
 }
 
-func NewSIPWebRTCManager(name string, iceServers []WebRTCICEServer, sipInfo SIPInfo) (*SIPWebRTCManager, error) {
-	wm, err := NewWebRTCManager(name, iceServers)
+func NewSIPWebRTCManager(loggerPort int, iceServers []WebRTCICEServer, sipInfo SIPInfo) (*SIPWebRTCManager, error) {
+	wm, err := newWebRTCManager(loggerPort, iceServers, "SIPWebRTCManager")
 	if err != nil {
 		return nil, err
 	}
