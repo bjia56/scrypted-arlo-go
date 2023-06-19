@@ -90,7 +90,7 @@ func main() {
 	}
 
 	log("Writing results")
-	log("%v", results)
+	log("%v", ips)
 	enc := json.NewEncoder(os.Stdout)
 	err = enc.Encode(ips)
 	if err != nil {
