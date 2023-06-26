@@ -1,8 +1,6 @@
 package scrypted_arlo_go
 
 import (
-	"crypto/rand"
-	"crypto/rsa"
 	"errors"
 	"fmt"
 	"io"
@@ -86,18 +84,21 @@ func newWebRTCManager(loggerPort int, iceServers []WebRTCICEServer, name string)
 	mgr.Println("Library version %s built at %s", version, parsedBuildTime.String())
 
 	certificates := []webrtc.Certificate{}
-	if DEBUG {
-		// generate RSA key so we can use it with wireshark
-		priv, err := rsa.GenerateKey(rand.Reader, 4096)
-		if err != nil {
-			return nil, fmt.Errorf("could not generate RSA key: %w", err)
+
+	/*
+		if DEBUG {
+			// generate RSA key so we can use it with wireshark
+			priv, err := rsa.GenerateKey(rand.Reader, 4096)
+			if err != nil {
+				return nil, fmt.Errorf("could not generate RSA key: %w", err)
+			}
+			certificate, err := webrtc.GenerateCertificate(priv)
+			if err != nil {
+				return nil, fmt.Errorf("could not generate DTLS certificate: %w", err)
+			}
+			certificates = append(certificates, *certificate)
 		}
-		certificate, err := webrtc.GenerateCertificate(priv)
-		if err != nil {
-			return nil, fmt.Errorf("could not generate DTLS certificate: %w", err)
-		}
-		certificates = append(certificates, *certificate)
-	}
+	*/
 
 	m := &webrtc.MediaEngine{}
 	if err := m.RegisterDefaultCodecs(); err != nil {
