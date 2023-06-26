@@ -1,17 +1,29 @@
 package scrypted_arlo_go
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
 	"errors"
 	"fmt"
 	"io"
 	"net"
+	"os"
+	"path"
 	"strconv"
 	"strings"
 
+	"github.com/davecgh/go-spew/spew"
+	"github.com/pion/rtp"
 	"github.com/pion/webrtc/v3"
 )
 
-var UDP_PACKET_SIZE = 1600
+func init() {
+	spew.Config.DisableMethods = true
+}
+
+var DEBUG = os.Getenv("SCRYPTED_ARLO_GO_DEBUG") != ""
+
+var UDP_PACKET_SIZE = 1200
 
 // type aliases for gopy to detect these structs
 type WebRTCICEServer = webrtc.ICEServer
@@ -71,12 +83,27 @@ func newWebRTCManager(loggerPort int, iceServers []WebRTCICEServer, name string)
 	}
 	mgr.Println("Library version %s built at %s", version, parsedBuildTime.String())
 
+	certificates := []webrtc.Certificate{}
+	if DEBUG {
+		// generate RSA key so we can use it with wireshark
+		priv, err := rsa.GenerateKey(rand.Reader, 4096)
+		if err != nil {
+			return nil, fmt.Errorf("could not generate RSA key: %w", err)
+		}
+		certificate, err := webrtc.GenerateCertificate(priv)
+		if err != nil {
+			return nil, fmt.Errorf("could not generate DTLS certificate: %w", err)
+		}
+		certificates = append(certificates, *certificate)
+	}
+
 	mgr.pc, err = webrtc.NewPeerConnection(webrtc.Configuration{
 		ICEServers:           iceServers,
 		ICETransportPolicy:   webrtc.ICETransportPolicyAll,
 		BundlePolicy:         webrtc.BundlePolicyBalanced,
 		RTCPMuxPolicy:        webrtc.RTCPMuxPolicyRequire,
 		ICECandidatePoolSize: 0,
+		Certificates:         certificates,
 	})
 	if err != nil {
 		return nil, err
@@ -101,9 +128,8 @@ func newWebRTCManager(loggerPort int, iceServers []WebRTCICEServer, name string)
 		// we don't expect any useful audio to come back over the channel,
 		// so just read it and move on
 		go func() {
-			rtcpBuf := make([]byte, 1500)
 			for {
-				if _, _, rtcpErr := tr.Read(rtcpBuf); rtcpErr != nil {
+				if _, _, rtcpErr := tr.ReadRTP(); rtcpErr != nil {
 					return
 				}
 			}
@@ -121,6 +147,41 @@ func (mgr *WebRTCManager) Printf(msg string, args ...any) {
 
 func (mgr *WebRTCManager) Println(msg string, args ...any) {
 	mgr.Printf(msg+"\n", args...)
+}
+
+func (mgr *WebRTCManager) DebugDumpKeys(outputDir string) error {
+	if !DEBUG {
+		return nil
+	}
+
+	stat, err := os.Stat(outputDir)
+	if errors.Is(err, os.ErrNotExist) {
+		err := os.MkdirAll(outputDir, 0700)
+		if err != nil {
+			return fmt.Errorf("cannot create output directory: %w", err)
+		}
+	} else if err != nil {
+		return fmt.Errorf("cannot stat directory: %w", err)
+	} else if !stat.IsDir() {
+		return fmt.Errorf("%s is not a directory", outputDir)
+	}
+
+	for i, c := range mgr.pc.GetConfiguration().Certificates {
+		pem, err := c.PEM()
+		if err != nil {
+			return fmt.Errorf("could not export PEM from certificate: %w", err)
+		}
+		filePath := path.Join(outputDir, fmt.Sprintf("%d.pem", i))
+		f, err := os.Create(filePath)
+		if err != nil {
+			return fmt.Errorf("could not create output file %s: %w", filePath, err)
+		}
+		f.WriteString(pem)
+		f.Close()
+	}
+
+	mgr.Println("Certificate(s) and key(s) written to output directory")
+	return nil
 }
 
 func (mgr *WebRTCManager) initializeRTPListener(kind, codecMimeType string) (conn net.Conn, port int, err error) {
@@ -155,10 +216,13 @@ func (mgr *WebRTCManager) initializeRTPListener(kind, codecMimeType string) (con
 	// Before these packets are returned they are processed by interceptors. For things
 	// like NACK this needs to be called.
 	go func() {
-		rtcpBuf := make([]byte, 1500)
 		for {
-			if _, _, rtcpErr := rtpSender.Read(rtcpBuf); rtcpErr != nil {
+			pkt, _, err := rtpSender.ReadRTCP()
+			if err != nil {
 				return
+			}
+			if DEBUG {
+				mgr.Println(spew.Sdump(pkt))
 			}
 		}
 	}()
@@ -167,21 +231,35 @@ func (mgr *WebRTCManager) initializeRTPListener(kind, codecMimeType string) (con
 		// wait for ice to complete gathering
 		<-mgr.iceCompleteSentinel
 
+		mark := true
+
 		inboundRTPPacket := make([]byte, UDP_PACKET_SIZE)
 		for {
 			n, _, err := conn.(*net.UDPConn).ReadFrom(inboundRTPPacket)
 			if err != nil {
-				mgr.Println("Error during %s track read: %s", kind, err)
+				if !errors.Is(err, net.ErrClosed) {
+					mgr.Println("Error during %s track read: %s", kind, err)
+				}
 				return
 			}
 
-			if _, err = track.Write(inboundRTPPacket[:n]); err != nil {
-				if errors.Is(err, io.ErrClosedPipe) {
-					// peerConnection has been closed.
-					return
-				}
+			var pkt rtp.Packet
+			if err = pkt.Unmarshal(inboundRTPPacket[:n]); err != nil {
+				mgr.Println("Error unmarshaling RTP packet: %s", err)
+				continue
+			}
 
-				mgr.Println("Error writing to %s track: %s", kind, err)
+			// packets we receive from ffmpeg all have the marker set, which seems to
+			// confuse arlo's backend. therefore, we only set the first packet's marker
+			pkt.Marker = mark
+			if mark {
+				mark = false
+			}
+
+			if err = track.WriteRTP(&pkt); err != nil {
+				if !errors.Is(err, io.ErrClosedPipe) {
+					mgr.Println("Error writing to %s track: %s", kind, err)
+				}
 				return
 			}
 		}

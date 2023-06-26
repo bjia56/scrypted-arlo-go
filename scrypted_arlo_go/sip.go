@@ -2,10 +2,13 @@ package scrypted_arlo_go
 
 import (
 	"crypto/md5"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"math/rand"
 	"net/http"
+	"os"
+	"path"
 	"strings"
 	"sync"
 	"time"
@@ -44,11 +47,10 @@ type SIPInfo struct {
 	DeviceID string
 
 	// sip call information
-	CallerURI      string
-	CalleeURI      string
-	Password       string
-	UserAgent      string
-	TimeoutSeconds Duration
+	CallerURI string
+	CalleeURI string
+	Password  string
+	UserAgent string
 
 	// parsed versions of caller and callee
 	from *sip.URI
@@ -165,8 +167,11 @@ type SIPWebRTCManager struct {
 	webrtc  *WebRTCManager
 	sipInfo SIPInfo
 
-	wsConn   *websocket.Conn
+	wsConn          *websocket.Conn
+	tlsKeylogWriter io.WriteCloser
+
 	randHost string
+	timeout  Duration
 
 	inviteResp        *sip.Msg
 	inviteRespMsgLock *sync.Mutex
@@ -178,15 +183,12 @@ func NewSIPWebRTCManager(loggerPort int, iceServers []WebRTCICEServer, sipInfo S
 		return nil, err
 	}
 
-	if sipInfo.TimeoutSeconds <= 0 {
-		sipInfo.TimeoutSeconds = 5
-	}
-
 	sm := &SIPWebRTCManager{
 		webrtc:            wm,
 		sipInfo:           sipInfo,
 		inviteRespMsgLock: &sync.Mutex{},
 		randHost:          randString(12) + ".invalid",
+		timeout:           5 * time.Second,
 	}
 	sm.sipInfo.from, err = sip.ParseURI([]byte(sm.sipInfo.CallerURI))
 	if err != nil {
@@ -210,6 +212,26 @@ func (sm *SIPWebRTCManager) Println(msg string, args ...any) {
 	sm.webrtc.Println(msg, args...)
 }
 
+func (sm *SIPWebRTCManager) DebugDumpKeys(outputDir string) error {
+	if !DEBUG {
+		return nil
+	}
+
+	err := sm.webrtc.DebugDumpKeys(outputDir)
+	if err != nil {
+		return err
+	}
+
+	filePath := path.Join(outputDir, "smTLS.log")
+	f, err := os.Create(filePath)
+	if err != nil {
+		return fmt.Errorf("could not create TLS keylog: %w", err)
+	}
+	sm.tlsKeylogWriter = f
+
+	return nil
+}
+
 func (sm *SIPWebRTCManager) InitializeAudioRTPListener(codecMimeType string) (port int, err error) {
 	return sm.webrtc.InitializeAudioRTPListener(codecMimeType)
 }
@@ -221,6 +243,10 @@ func (sm *SIPWebRTCManager) connectWebsocket() error {
 	}
 	cfg.Header = sm.sipInfo.WebsocketHeaders.toHTTPHeaders()
 	cfg.Protocol = []string{"sip"}
+
+	if DEBUG && sm.tlsKeylogWriter != nil {
+		cfg.TlsConfig = &tls.Config{KeyLogWriter: sm.tlsKeylogWriter}
+	}
 
 	sm.wsConn, err = websocket.DialConfig(cfg)
 	if err != nil {
@@ -385,7 +411,7 @@ func (sm *SIPWebRTCManager) writeWebsocket(msg *sip.Msg) error {
 	}
 	msgStr := msg.String()
 	sm.Println("Sending sip message:\n%s", msgStr)
-	sm.wsConn.SetWriteDeadline(time.Now().Add(sm.sipInfo.TimeoutSeconds * time.Second))
+	sm.wsConn.SetWriteDeadline(time.Now().Add(sm.timeout))
 	_, err := sm.wsConn.Write([]byte(msgStr))
 	return err
 }
@@ -397,7 +423,7 @@ func (sm *SIPWebRTCManager) readWebsocket() (*sip.Msg, error) {
 
 	var readBuf = make([]byte, 4096)
 
-	sm.wsConn.SetReadDeadline(time.Now().Add(sm.sipInfo.TimeoutSeconds * time.Second))
+	sm.wsConn.SetReadDeadline(time.Now().Add(sm.timeout))
 	n, err := sm.wsConn.Read(readBuf)
 	if err != nil {
 		return nil, fmt.Errorf("could not read websocket: %w", err)
@@ -583,6 +609,10 @@ func (sm *SIPWebRTCManager) Close() {
 		}
 
 		sm.wsConn.Close()
+	}
+	if sm.tlsKeylogWriter != nil {
+		sm.tlsKeylogWriter.Close()
+		sm.tlsKeylogWriter = nil
 	}
 	sm.inviteResp = nil
 	sm.wsConn = nil
