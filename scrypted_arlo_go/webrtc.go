@@ -8,20 +8,22 @@ import (
 	"io"
 	"net"
 	"os"
-	"path"
 	"strconv"
 	"strings"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/pion/interceptor"
+	"github.com/pion/logging"
 	"github.com/pion/rtp"
 	"github.com/pion/webrtc/v3"
+	"golang.org/x/exp/slices"
 )
 
 func init() {
 	spew.Config.DisableMethods = true
 }
 
-var DEBUG = os.Getenv("SCRYPTED_ARLO_GO_DEBUG") != ""
+var DEBUG = !slices.Contains([]string{"", "0"}, os.Getenv("SCRYPTED_ARLO_GO_DEBUG"))
 
 var UDP_PACKET_SIZE = 1200
 
@@ -97,7 +99,24 @@ func newWebRTCManager(loggerPort int, iceServers []WebRTCICEServer, name string)
 		certificates = append(certificates, *certificate)
 	}
 
-	mgr.pc, err = webrtc.NewPeerConnection(webrtc.Configuration{
+	m := &webrtc.MediaEngine{}
+	if err := m.RegisterDefaultCodecs(); err != nil {
+		return nil, err
+	}
+
+	i := &interceptor.Registry{}
+	if err := webrtc.RegisterDefaultInterceptors(m, i); err != nil {
+		return nil, err
+	}
+
+	webrtcLogger := logging.NewDefaultLoggerFactory()
+	webrtcLogger.Writer = logger
+	s := webrtc.SettingEngine{
+		LoggerFactory: webrtcLogger,
+	}
+
+	api := webrtc.NewAPI(webrtc.WithMediaEngine(m), webrtc.WithInterceptorRegistry(i), webrtc.WithSettingEngine(s))
+	mgr.pc, err = api.NewPeerConnection(webrtc.Configuration{
 		ICEServers:           iceServers,
 		ICETransportPolicy:   webrtc.ICETransportPolicyAll,
 		BundlePolicy:         webrtc.BundlePolicyBalanced,
@@ -149,6 +168,7 @@ func (mgr *WebRTCManager) Println(msg string, args ...any) {
 	mgr.Printf(msg+"\n", args...)
 }
 
+/*
 func (mgr *WebRTCManager) DebugDumpKeys(outputDir string) error {
 	if !DEBUG {
 		return nil
@@ -183,6 +203,7 @@ func (mgr *WebRTCManager) DebugDumpKeys(outputDir string) error {
 	mgr.Println("Certificate(s) and key(s) written to output directory")
 	return nil
 }
+*/
 
 func (mgr *WebRTCManager) initializeRTPListener(kind, codecMimeType string) (conn net.Conn, port int, err error) {
 	if mgr.pc == nil {

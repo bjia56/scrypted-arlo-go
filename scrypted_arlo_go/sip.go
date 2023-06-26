@@ -7,8 +7,6 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
-	"os"
-	"path"
 	"strings"
 	"sync"
 	"time"
@@ -212,6 +210,7 @@ func (sm *SIPWebRTCManager) Println(msg string, args ...any) {
 	sm.webrtc.Println(msg, args...)
 }
 
+/*
 func (sm *SIPWebRTCManager) DebugDumpKeys(outputDir string) error {
 	if !DEBUG {
 		return nil
@@ -231,6 +230,7 @@ func (sm *SIPWebRTCManager) DebugDumpKeys(outputDir string) error {
 
 	return nil
 }
+*/
 
 func (sm *SIPWebRTCManager) InitializeAudioRTPListener(codecMimeType string) (port int, err error) {
 	return sm.webrtc.InitializeAudioRTPListener(codecMimeType)
