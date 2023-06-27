@@ -43,13 +43,6 @@ test_wheel() (
     fi
 )
 
-if [ "$CIBW_ARCHS" == "x86_64" ]
-then
-    _start_group "Python 3.7"
-    install_python 7
-    build_wheel 7
-fi
-
 _start_group "Python 3.8"
 install_python 8
 build_wheel 8
