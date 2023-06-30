@@ -594,6 +594,7 @@ func (sm *SIPWebRTCManager) Start() error {
 	}()
 
 	sm.Println("Started SIP push to talk")
+	sm.Println("Time elapsed since creation of %s: %s", sm.webrtc.name, time.Since(sm.webrtc.startTime).String())
 
 	return nil
 }

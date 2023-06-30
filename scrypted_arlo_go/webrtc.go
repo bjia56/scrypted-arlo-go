@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/pion/interceptor"
@@ -58,6 +59,7 @@ const (
 type WebRTCManager struct {
 	pc     *webrtc.PeerConnection
 	logger *TCPLogger
+	name   string
 
 	// for receiving audio RTP packets
 	audioRTP net.Conn
@@ -66,6 +68,9 @@ type WebRTCManager struct {
 	// cache results in iceCandidates
 	iceCompleteSentinel <-chan struct{}
 	iceCandidates       []WebRTCICECandidate
+
+	// for gathering startup metrics
+	startTime time.Time
 }
 
 func NewWebRTCManager(loggerPort int, iceServers []WebRTCICEServer) (*WebRTCManager, error) {
@@ -79,7 +84,9 @@ func newWebRTCManager(loggerPort int, iceServers []WebRTCICEServer, name string)
 	}
 
 	mgr := WebRTCManager{
-		logger: logger,
+		logger:    logger,
+		name:      name,
+		startTime: time.Now(),
 	}
 	mgr.Println("Library version %s built at %s", version, parsedBuildTime.String())
 
@@ -138,6 +145,8 @@ func newWebRTCManager(loggerPort int, iceServers []WebRTCICEServer, name string)
 		mgr.Println("OnConnectionStateChange %s", s.String())
 		if s == webrtc.PeerConnectionStateDisconnected {
 			mgr.Close()
+		} else if s == webrtc.PeerConnectionStateConnected {
+			mgr.Println("Time elapsed since creation of %s: %s", mgr.name, time.Since(mgr.startTime).String())
 		}
 	})
 	mgr.pc.OnICEConnectionStateChange(func(is webrtc.ICEConnectionState) {
