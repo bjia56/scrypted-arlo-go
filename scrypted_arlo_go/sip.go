@@ -2,7 +2,6 @@ package scrypted_arlo_go
 
 import (
 	"crypto/md5"
-	"crypto/tls"
 	"fmt"
 	"io"
 	"math/rand"
@@ -244,9 +243,11 @@ func (sm *SIPWebRTCManager) connectWebsocket() error {
 	cfg.Header = sm.sipInfo.WebsocketHeaders.toHTTPHeaders()
 	cfg.Protocol = []string{"sip"}
 
-	if DEBUG && sm.tlsKeylogWriter != nil {
-		cfg.TlsConfig = &tls.Config{KeyLogWriter: sm.tlsKeylogWriter}
-	}
+	/*
+		if DEBUG && sm.tlsKeylogWriter != nil {
+			cfg.TlsConfig = &tls.Config{KeyLogWriter: sm.tlsKeylogWriter}
+		}
+	*/
 
 	sm.wsConn, err = websocket.DialConfig(cfg)
 	if err != nil {
