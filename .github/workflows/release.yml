@@ -21,6 +21,9 @@ jobs:
   validate-args:
     runs-on: ubuntu-latest
     steps:
+      - name: Print input arguments
+        run: echo "${{ toJSON(github.event.inputs) }}"
+        
       - uses: mukunku/tag-exists-action@v1.2.0
         id: check-tag
         with:
