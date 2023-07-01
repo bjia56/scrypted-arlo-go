@@ -152,6 +152,9 @@ func newWebRTCManager(loggerPort int, iceServers []WebRTCICEServer, name string)
 	})
 	mgr.pc.OnICEConnectionStateChange(func(is webrtc.ICEConnectionState) {
 		mgr.Println("OnICEConnectionStateChange %s", is.String())
+		if is == webrtc.ICEConnectionStateConnected {
+			mgr.PrintTimeSinceCreation()
+		}
 	})
 	mgr.pc.OnTrack(func(tr *webrtc.TrackRemote, r *webrtc.RTPReceiver) {
 		mgr.Println("Remote sent us a track we will ignore: %s", tr.Codec().MimeType)
