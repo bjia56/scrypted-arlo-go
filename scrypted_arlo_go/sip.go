@@ -206,7 +206,9 @@ func NewSIPWebRTCManager(loggerPort int, iceServers []WebRTCICEServer, sipInfo S
 }
 
 func (sm *SIPWebRTCManager) Println(msg string, args ...any) {
-	sm.webrtc.Println(msg, args...)
+	if sm.webrtc != nil {
+		sm.webrtc.Println(msg, args...)
+	}
 }
 
 /*
@@ -268,7 +270,9 @@ func (sm *SIPWebRTCManager) makeLocalSDP() (string, error) {
 		return "", fmt.Errorf("could not set local description: %w", err)
 	}
 
-	sm.webrtc.WaitForICEComplete()
+	for end := error(nil); end == nil; _, end = sm.webrtc.GetNextICECandidate() {
+		continue
+	}
 	offer = *sm.webrtc.pc.LocalDescription()
 
 	return offer.SDP, nil
@@ -407,9 +411,6 @@ func (sm *SIPWebRTCManager) makeMessage(payload string) *sip.Msg {
 }
 
 func (sm *SIPWebRTCManager) writeWebsocket(msg *sip.Msg) error {
-	if sm.wsConn == nil {
-		return fmt.Errorf("websocket closed")
-	}
 	msgStr := msg.String()
 	sm.Println("Sending sip message:\n%s", msgStr)
 	sm.wsConn.SetWriteDeadline(time.Now().Add(sm.timeout))
@@ -418,10 +419,6 @@ func (sm *SIPWebRTCManager) writeWebsocket(msg *sip.Msg) error {
 }
 
 func (sm *SIPWebRTCManager) readWebsocket() (*sip.Msg, error) {
-	if sm.wsConn == nil {
-		return nil, fmt.Errorf("websocket closed")
-	}
-
 	var readBuf = make([]byte, 4096)
 
 	sm.wsConn.SetReadDeadline(time.Now().Add(sm.timeout))
@@ -528,6 +525,21 @@ func (sm *SIPWebRTCManager) Start() error {
 		return fmt.Errorf("unexpected invite response content type %q", inviteResponse.Payload.ContentType())
 	}
 
+	remoteSDP := string(inviteResponse.Payload.Data())
+	if !strings.Contains(remoteSDP, "a=mid:") {
+		remoteSDP += "a=mid:0\r\n"
+	}
+	if !strings.Contains(remoteSDP, "a=sendrecv") {
+		remoteSDP += "a=sendrecv\r\n"
+	}
+	err = sm.webrtc.SetRemoteDescription(WebRTCSessionDescription{
+		Type: webrtc.SDPTypeAnswer,
+		SDP:  remoteSDP,
+	})
+	if err != nil {
+		return fmt.Errorf("could not set remote description: %w", err)
+	}
+
 	if err = sm.sendAck(inviteResponse); err != nil {
 		return fmt.Errorf("could not send ack: %w", err)
 	}
@@ -558,21 +570,6 @@ func (sm *SIPWebRTCManager) Start() error {
 		return fmt.Errorf("could not parse 202 accepted: %w", err)
 	}
 
-	remoteSDP := string(inviteResponse.Payload.Data())
-	if !strings.Contains(remoteSDP, "a=mid:") {
-		remoteSDP += "a=mid:0\r\n"
-	}
-	if !strings.Contains(remoteSDP, "a=sendrecv") {
-		remoteSDP += "a=sendrecv\r\n"
-	}
-	err = sm.webrtc.SetRemoteDescription(WebRTCSessionDescription{
-		Type: webrtc.SDPTypeAnswer,
-		SDP:  remoteSDP,
-	})
-	if err != nil {
-		return fmt.Errorf("could not set remote description: %w", err)
-	}
-
 	// keepAlive loop
 	go func() {
 		for {
@@ -600,27 +597,21 @@ func (sm *SIPWebRTCManager) Start() error {
 }
 
 func (sm *SIPWebRTCManager) Close() {
-	if sm.wsConn != nil {
-		sm.inviteRespMsgLock.Lock()
-		defer sm.inviteRespMsgLock.Unlock()
+	sm.inviteRespMsgLock.Lock()
+	defer sm.inviteRespMsgLock.Unlock()
 
-		if sm.inviteResp != nil {
-			bye := sm.makeBye(sm.inviteResp)
-			sm.writeWebsocket(bye)
-			sm.inviteResp = nil
-		}
-
-		sm.wsConn.Close()
-		sm.wsConn = nil
+	if sm.inviteResp != nil {
+		bye := sm.makeBye(sm.inviteResp)
+		sm.writeWebsocket(bye)
 	}
+
+	sm.wsConn.Close()
+
 	if sm.tlsKeylogWriter != nil {
 		sm.tlsKeylogWriter.Close()
-		sm.tlsKeylogWriter = nil
 	}
-	if sm.webrtc != nil {
-		sm.webrtc.Close()
-		sm.webrtc = nil
-	}
+
+	sm.webrtc.Close()
 }
 
 func init() {

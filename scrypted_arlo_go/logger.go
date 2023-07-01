@@ -20,9 +20,7 @@ func NewTCPLogger(loggerPort int, name string) (*TCPLogger, error) {
 }
 
 func (t *TCPLogger) Send(s string) {
-	if t.conn != nil {
-		t.Write([]byte(s))
-	}
+	t.Write([]byte(s))
 }
 
 func (t *TCPLogger) Write(p []byte) (n int, err error) {
@@ -30,8 +28,5 @@ func (t *TCPLogger) Write(p []byte) (n int, err error) {
 }
 
 func (t *TCPLogger) Close() {
-	if t.conn != nil {
-		t.conn.Close()
-		t.conn = nil
-	}
+	t.conn.Close()
 }

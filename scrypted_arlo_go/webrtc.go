@@ -170,9 +170,7 @@ func newWebRTCManager(loggerPort int, iceServers []WebRTCICEServer, name string)
 }
 
 func (mgr *WebRTCManager) Printf(msg string, args ...any) {
-	if mgr.logger != nil {
-		mgr.logger.Send(fmt.Sprintf(msg, args...))
-	}
+	mgr.logger.Send(fmt.Sprintf(msg, args...))
 }
 
 func (mgr *WebRTCManager) Println(msg string, args ...any) {
@@ -221,10 +219,6 @@ func (mgr *WebRTCManager) DebugDumpKeys(outputDir string) error {
 */
 
 func (mgr *WebRTCManager) initializeRTPListener(kind, codecMimeType string) (conn net.Conn, port int, err error) {
-	if mgr.pc == nil {
-		return nil, 0, fmt.Errorf("peer connection closed")
-	}
-
 	// cleanup in case of error
 	defer func() {
 		if err != nil && conn != nil {
@@ -320,37 +314,22 @@ func (mgr *WebRTCManager) InitializeAudioRTPListener(codecMimeType string) (port
 }
 
 func (mgr *WebRTCManager) CreateOffer() (WebRTCSessionDescription, error) {
-	if mgr.pc == nil {
-		return webrtc.SessionDescription{}, fmt.Errorf("peer connection closed")
-	}
 	return mgr.pc.CreateOffer(nil)
 }
 
 func (mgr *WebRTCManager) CreateAnswer() (WebRTCSessionDescription, error) {
-	if mgr.pc == nil {
-		return webrtc.SessionDescription{}, fmt.Errorf("peer connection closed")
-	}
 	return mgr.pc.CreateAnswer(nil)
 }
 
 func (mgr *WebRTCManager) SetLocalDescription(desc WebRTCSessionDescription) error {
-	if mgr.pc == nil {
-		return fmt.Errorf("peer connection closed")
-	}
 	return mgr.pc.SetLocalDescription(desc)
 }
 
 func (mgr *WebRTCManager) SetRemoteDescription(desc WebRTCSessionDescription) error {
-	if mgr.pc == nil {
-		return fmt.Errorf("peer connection closed")
-	}
 	return mgr.pc.SetRemoteDescription(desc)
 }
 
 func (mgr *WebRTCManager) AddICECandidate(c WebRTCICECandidateInit) error {
-	if mgr.pc == nil {
-		return fmt.Errorf("peer connection closed")
-	}
 	return mgr.pc.AddICECandidate(c)
 }
 
@@ -372,17 +351,8 @@ func (mgr *WebRTCManager) GetNextICECandidate() (WebRTCICECandidate, error) {
 }
 
 func (mgr *WebRTCManager) Close() {
-	if mgr.audioRTP != nil {
-		mgr.audioRTP.Close()
-		mgr.audioRTP = nil
-	}
-	if mgr.pc != nil {
-		mgr.pc.Close()
-		mgr.pc = nil
-	}
-	if mgr.logger != nil {
-		mgr.PrintTimeSinceCreation()
-		mgr.logger.Close()
-		mgr.logger = nil
-	}
+	mgr.audioRTP.Close()
+	mgr.pc.Close()
+	mgr.PrintTimeSinceCreation()
+	mgr.logger.Close()
 }
