@@ -67,7 +67,7 @@ type WebRTCManager struct {
 	// used to signal completion of ice gathering
 	// cache results in iceCandidates
 	iceCompleteSentinel <-chan struct{}
-	iceCandidates       []WebRTCICECandidate
+	iceCandidates       chan WebRTCICECandidate
 
 	// for gathering startup metrics
 	startTime time.Time
@@ -84,9 +84,10 @@ func newWebRTCManager(loggerPort int, iceServers []WebRTCICEServer, name string)
 	}
 
 	mgr := WebRTCManager{
-		logger:    logger,
-		name:      name,
-		startTime: time.Now(),
+		logger:        logger,
+		name:          name,
+		startTime:     time.Now(),
+		iceCandidates: make(chan WebRTCICECandidate),
 	}
 	mgr.Println("Library version %s built at %s", version, parsedBuildTime.String())
 
@@ -138,7 +139,7 @@ func newWebRTCManager(loggerPort int, iceServers []WebRTCICEServer, name string)
 	mgr.iceCompleteSentinel = webrtc.GatheringCompletePromise(mgr.pc)
 	mgr.pc.OnICECandidate(func(c *WebRTCICECandidate) {
 		if c != nil {
-			mgr.iceCandidates = append(mgr.iceCandidates, *c)
+			go func(c WebRTCICECandidate) { mgr.iceCandidates <- c }(*c)
 		}
 	})
 	mgr.pc.OnConnectionStateChange(func(s webrtc.PeerConnectionState) {
@@ -146,7 +147,7 @@ func newWebRTCManager(loggerPort int, iceServers []WebRTCICEServer, name string)
 		if s == webrtc.PeerConnectionStateDisconnected {
 			mgr.Close()
 		} else if s == webrtc.PeerConnectionStateConnected {
-			mgr.Println("Time elapsed since creation of %s: %s", mgr.name, time.Since(mgr.startTime).String())
+			mgr.PrintTimeSinceCreation()
 		}
 	})
 	mgr.pc.OnICEConnectionStateChange(func(is webrtc.ICEConnectionState) {
@@ -176,6 +177,10 @@ func (mgr *WebRTCManager) Printf(msg string, args ...any) {
 
 func (mgr *WebRTCManager) Println(msg string, args ...any) {
 	mgr.Printf(msg+"\n", args...)
+}
+
+func (mgr *WebRTCManager) PrintTimeSinceCreation() {
+	mgr.Println("Time elapsed since creation of %s: %s", mgr.name, time.Since(mgr.startTime).String())
 }
 
 /*
@@ -349,11 +354,21 @@ func (mgr *WebRTCManager) AddICECandidate(c WebRTCICECandidateInit) error {
 	return mgr.pc.AddICECandidate(c)
 }
 
-func (mgr *WebRTCManager) WaitAndGetICECandidates() []WebRTCICECandidate {
+func (mgr *WebRTCManager) WaitForICEComplete() {
 	mgr.Println("Waiting for ICE candidate gathering to finish")
 	<-mgr.iceCompleteSentinel
 	mgr.Println("ICE candidate gathering complete")
-	return mgr.iceCandidates
+}
+
+func (mgr *WebRTCManager) GetNextICECandidate() (WebRTCICECandidate, error) {
+	endOfCandidates := fmt.Errorf("no more candidates")
+
+	select {
+	case c := <-mgr.iceCandidates:
+		return c, nil
+	case <-mgr.iceCompleteSentinel:
+		return WebRTCICECandidate{}, endOfCandidates
+	}
 }
 
 func (mgr *WebRTCManager) Close() {
@@ -366,6 +381,7 @@ func (mgr *WebRTCManager) Close() {
 		mgr.pc = nil
 	}
 	if mgr.logger != nil {
+		mgr.PrintTimeSinceCreation()
 		mgr.logger.Close()
 		mgr.logger = nil
 	}

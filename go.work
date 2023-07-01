@@ -1,0 +1,4 @@
+go 1.19
+
+use ./scrypted_arlo_go
+use ./scripts/auth_hosts

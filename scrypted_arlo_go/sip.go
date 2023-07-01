@@ -268,7 +268,7 @@ func (sm *SIPWebRTCManager) makeLocalSDP() (string, error) {
 		return "", fmt.Errorf("could not set local description: %w", err)
 	}
 
-	sm.webrtc.WaitAndGetICECandidates()
+	sm.webrtc.WaitForICEComplete()
 	offer = *sm.webrtc.pc.LocalDescription()
 
 	return offer.SDP, nil
@@ -594,13 +594,12 @@ func (sm *SIPWebRTCManager) Start() error {
 	}()
 
 	sm.Println("Started SIP push to talk")
-	sm.Println("Time elapsed since creation of %s: %s", sm.webrtc.name, time.Since(sm.webrtc.startTime).String())
+	sm.webrtc.PrintTimeSinceCreation()
 
 	return nil
 }
 
 func (sm *SIPWebRTCManager) Close() {
-	sm.webrtc.Close()
 	if sm.wsConn != nil {
 		sm.inviteRespMsgLock.Lock()
 		defer sm.inviteRespMsgLock.Unlock()
@@ -608,16 +607,20 @@ func (sm *SIPWebRTCManager) Close() {
 		if sm.inviteResp != nil {
 			bye := sm.makeBye(sm.inviteResp)
 			sm.writeWebsocket(bye)
+			sm.inviteResp = nil
 		}
 
 		sm.wsConn.Close()
+		sm.wsConn = nil
 	}
 	if sm.tlsKeylogWriter != nil {
 		sm.tlsKeylogWriter.Close()
 		sm.tlsKeylogWriter = nil
 	}
-	sm.inviteResp = nil
-	sm.wsConn = nil
+	if sm.webrtc != nil {
+		sm.webrtc.Close()
+		sm.webrtc = nil
+	}
 }
 
 func init() {
