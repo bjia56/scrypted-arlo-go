@@ -34,10 +34,4 @@ jobs:
 
       - name: Run checker
         run: |
-          docker run auth_hosts:latest > /tmp/report.json
-
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: report
-          path: /tmp/report.json
+          docker run auth_hosts:latest
