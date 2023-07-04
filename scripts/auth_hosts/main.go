@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/tls"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -95,6 +96,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	err = enc.Encode(convertB64(ips))
+	if err != nil {
+		panic(err)
+	}
 }
 
 func verifyRemoteCert(ip string) error {
@@ -140,4 +145,12 @@ func verifyRemoteAuthEndpoint(ip string) error {
 	}
 
 	return nil
+}
+
+func convertB64(s []string) []string {
+	result := []string{}
+	for _, s := range s {
+		result = append(result, base64.RawStdEncoding.EncodeToString([]byte(s)))
+	}
+	return result
 }
