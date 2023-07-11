@@ -150,7 +150,7 @@ func verifyRemoteAuthEndpoint(ip string) error {
 func convertB64(s []string) []string {
 	result := []string{}
 	for _, s := range s {
-		result = append(result, base64.RawStdEncoding.EncodeToString([]byte(s)))
+		result = append(result, base64.StdEncoding.EncodeToString([]byte(s)))
 	}
 	return result
 }
