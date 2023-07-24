@@ -14,7 +14,7 @@ import (
 )
 
 func log(s string, args ...any) {
-	os.Stdout.WriteString(fmt.Sprintf(s, args...) + "\n")
+	os.Stderr.WriteString(fmt.Sprintf(s, args...) + "\n")
 }
 
 const HOST = "ocapi-app.arlo.com"
@@ -96,6 +96,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	enc = json.NewEncoder(os.Stderr)
 	err = enc.Encode(convertB64(ips))
 	if err != nil {
 		panic(err)
