@@ -92,7 +92,7 @@ func main() {
 
 	log("Writing results")
 	enc := json.NewEncoder(os.Stdout)
-	err = enc.Encode(ips)
+	err = enc.Encode(convertB64(ips))
 	if err != nil {
 		panic(err)
 	}
