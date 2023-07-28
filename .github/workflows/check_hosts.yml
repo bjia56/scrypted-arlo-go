@@ -8,7 +8,7 @@ on:
     paths: ["scripts/auth_hosts/**", ".github/workflows/check_hosts.yml"]
   workflow_dispatch:
   schedule:
-    - cron: "0 4 * * 6"
+    - cron: "0 4 * * *"
 
 jobs:
   check_hosts:
