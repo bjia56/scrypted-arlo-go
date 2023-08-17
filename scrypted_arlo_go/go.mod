@@ -7,7 +7,12 @@ require (
 	github.com/pion/webrtc/v3 v3.2.10
 )
 
-require golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1
+require (
+	github.com/tmaxmax/go-sse v0.6.0
+	golang.org/x/exp v0.0.0-20230811145659-89c5cff77bcb
+)
+
+require github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 
 replace github.com/pion/ice/v2 v2.3.8 => github.com/bjia56/ice/v2 v2.0.0-20230624041812-5b83f210873b
 
