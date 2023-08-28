@@ -2,47 +2,89 @@ package scrypted_arlo_go
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"sync"
 
+	"github.com/google/uuid"
 	"github.com/tmaxmax/go-sse"
 )
 
 type SSEClient struct {
-	conn     *sse.Connection
+	UUID string
+
+	url     string
+	headers HeadersMap
+
 	messages chan sse.Event
-	cancel   context.CancelFunc
+
+	ctxLock *sync.Mutex
+	ctx     context.Context
+	conn    *sse.Connection
+	cancel  context.CancelFunc
 }
 
 func NewSSEClient(url string, headers HeadersMap) (*SSEClient, error) {
-	ctx, cancel := context.WithCancel(context.Background())
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
-	if err != nil {
-		cancel()
-		return nil, err
+	s := &SSEClient{
+		UUID:     uuid.New().String(),
+		url:      url,
+		headers:  headers,
+		messages: make(chan sse.Event),
+		ctxLock:  &sync.Mutex{},
 	}
-	req.Header = headers.toHTTPHeaders()
+	s.ctxLock.Lock()
+	defer s.ctxLock.Unlock()
+	return s, s.initialize()
+}
 
-	conn := sse.NewConnection(req)
-	messagesChan := make(chan sse.Event)
-	conn.SubscribeToAll(func(event sse.Event) {
-		if ctx.Err() != context.Canceled {
-			messagesChan <- event
+// must hold ctxLock when calling this
+func (s *SSEClient) initialize() error {
+	s.ctx, s.cancel = context.WithCancel(context.Background())
+	req, err := http.NewRequestWithContext(s.ctx, http.MethodGet, s.url, http.NoBody)
+	if err != nil {
+		s.cancel()
+		return err
+	}
+
+	req.Header = s.headers.toHTTPHeaders()
+	s.conn = sse.NewConnection(req)
+	s.conn.SubscribeToAll(func(event sse.Event) {
+		s.ctxLock.Lock()
+		defer s.ctxLock.Unlock()
+		if s.ctx.Err() != context.Canceled {
+			s.messages <- event
 		}
 	})
 
-	return &SSEClient{
-		conn:     conn,
-		messages: messagesChan,
-		cancel:   cancel,
-	}, nil
+	return nil
 }
 
 func (s *SSEClient) Start() {
 	go func() {
-		err := s.conn.Connect()
-		fmt.Printf("[Arlo]: SSEClient exited with: %v\n", err)
+		for {
+			fmt.Printf("[Arlo]: SSEClient %s starting\n", s.UUID)
+			err := s.conn.Connect()
+			if err != nil && !errors.Is(err, context.Canceled) {
+				fmt.Printf("[Arlo]: SSEClient %s exited with unrecoverable: %v\n", s.UUID, err)
+				break
+			}
+			s.ctxLock.Lock()
+			if errors.Is(err, context.Canceled) || s.ctx.Err() == context.Canceled {
+				fmt.Printf("[Arlo]: SSEClient %s exited\n", s.UUID)
+				s.ctxLock.Unlock()
+				break
+			}
+			fmt.Printf("[Arlo]: SSEClient %s restarting\n", s.UUID)
+			if err := s.initialize(); err != nil {
+				fmt.Printf("[Arlo]: SSEClient %s could not be reinitialized: %v\n", s.UUID, err)
+				s.ctxLock.Unlock()
+				break
+			}
+			s.ctxLock.Unlock()
+		}
+		close(s.messages)
 	}()
 }
 
@@ -55,6 +97,7 @@ func (s *SSEClient) Next() (string, error) {
 }
 
 func (s *SSEClient) Close() {
+	s.ctxLock.Lock()
+	defer s.ctxLock.Unlock()
 	s.cancel()
-	close(s.messages)
 }

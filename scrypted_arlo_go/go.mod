@@ -20,7 +20,7 @@ replace github.com/jart/gosip v0.0.0-20220818224804-29801cedf805 => github.com/b
 
 require (
 	github.com/davecgh/go-spew v1.1.1
-	github.com/google/uuid v1.3.0 // indirect
+	github.com/google/uuid v1.3.0
 	github.com/pion/datachannel v1.5.5 // indirect
 	github.com/pion/dtls/v2 v2.2.7 // indirect
 	github.com/pion/ice/v2 v2.3.8 // indirect
