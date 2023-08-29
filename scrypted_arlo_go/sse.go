@@ -66,17 +66,13 @@ func (s *SSEClient) Start() {
 		for {
 			fmt.Printf("[Arlo]: SSEClient %s starting\n", s.UUID)
 			err := s.conn.Connect()
-			if err != nil && !errors.Is(err, context.Canceled) {
-				fmt.Printf("[Arlo]: SSEClient %s exited with unrecoverable: %v\n", s.UUID, err)
-				break
-			}
 			s.ctxLock.Lock()
 			if errors.Is(err, context.Canceled) || s.ctx.Err() == context.Canceled {
 				fmt.Printf("[Arlo]: SSEClient %s exited\n", s.UUID)
 				s.ctxLock.Unlock()
 				break
 			}
-			fmt.Printf("[Arlo]: SSEClient %s restarting\n", s.UUID)
+			fmt.Printf("[Arlo]: SSEClient %s restarting due to: %s\n", s.UUID, err)
 			if err := s.initialize(); err != nil {
 				fmt.Printf("[Arlo]: SSEClient %s could not be reinitialized: %v\n", s.UUID, err)
 				s.ctxLock.Unlock()
