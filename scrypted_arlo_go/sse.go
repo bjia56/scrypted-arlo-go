@@ -72,7 +72,7 @@ func (s *SSEClient) Start() {
 				s.ctxLock.Unlock()
 				break
 			}
-			fmt.Printf("[Arlo]: SSEClient %s restarting due to: %s\n", s.UUID, err)
+			fmt.Printf("[Arlo]: SSEClient %s restarting due to: %v\n", s.UUID, err)
 			if err := s.initialize(); err != nil {
 				fmt.Printf("[Arlo]: SSEClient %s could not be reinitialized: %v\n", s.UUID, err)
 				s.ctxLock.Unlock()
