@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jart/gosip/sdp"
 	"github.com/jart/gosip/sip"
 	"github.com/jart/gosip/util"
 	"github.com/pion/webrtc/v3"
@@ -284,7 +285,7 @@ func (sm *SIPWebRTCManager) makeLocalSDP() (string, error) {
 	return offer.SDP, nil
 }
 
-func (sm *SIPWebRTCManager) makeInvite(sdp string) *sip.Msg {
+func (sm *SIPWebRTCManager) makeInvite(localSDP string) *sip.Msg {
 	invite := &sip.Msg{
 		CallID:     util.GenerateCallID(),
 		CSeq:       1,
@@ -320,8 +321,8 @@ func (sm *SIPWebRTCManager) makeInvite(sdp string) *sip.Msg {
 		},
 		UserAgent: sm.sipInfo.UserAgent,
 		Payload: &sip.MiscPayload{
-			T: "application/sdp",
-			D: []byte(sdp),
+			T: sdp.ContentType,
+			D: []byte(localSDP),
 		},
 	}
 
@@ -445,6 +446,17 @@ func (sm *SIPWebRTCManager) readWebsocket() (*sip.Msg, error) {
 		return nil, fmt.Errorf("could not parse sip message: %w", err)
 	}
 
+	if msg.Payload != nil && msg.Payload.ContentType() == sdp.ContentType {
+		// gosip's sdp parsing is buggy, so this workaround is to force a parsing
+		// that retains the original data
+		patched := strings.Replace(string(readBuf[0:n]), fmt.Sprintf("Content-Type: %s", sdp.ContentType), fmt.Sprintf("Content-Type: %s", "application/sdp1"), 1)
+		msg, err = sip.ParseMsg([]byte(patched))
+		if err != nil {
+			return nil, fmt.Errorf("could not parse patched sip message: %w", err)
+		}
+		msg.Payload.(*sip.MiscPayload).T = sdp.ContentType
+	}
+
 	return msg, nil
 }
 
@@ -463,16 +475,16 @@ func (sm *SIPWebRTCManager) Start() (string, error) {
 		return "", fmt.Errorf("could not connect websocket: %w", err)
 	}
 
-	var sdp string = sm.sipInfo.SDP
-	if sdp == "" {
+	var localSDP string = sm.sipInfo.SDP
+	if localSDP == "" {
 		// need to generate sdp
-		sdp, err = sm.makeLocalSDP()
+		localSDP, err = sm.makeLocalSDP()
 		if err != nil {
 			return "", fmt.Errorf("could not create local sdp: %w", err)
 		}
 	}
 
-	invite := sm.makeInvite(sdp)
+	invite := sm.makeInvite(localSDP)
 	if err = sm.writeWebsocket(invite); err != nil {
 		return "", fmt.Errorf("could not send invite over websocket: %w", err)
 	}
@@ -536,7 +548,7 @@ func (sm *SIPWebRTCManager) Start() (string, error) {
 	sm.inviteResp = inviteResponse
 	sm.inviteRespMsgLock.Unlock()
 
-	if inviteResponse.Payload.ContentType() != "application/sdp" {
+	if inviteResponse.Payload.ContentType() != sdp.ContentType {
 		return "", fmt.Errorf("unexpected invite response content type %q", inviteResponse.Payload.ContentType())
 	}
 
