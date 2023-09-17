@@ -554,14 +554,44 @@ func (sm *SIPWebRTCManager) Start() (string, error) {
 
 	remoteSDP := string(inviteResponse.Payload.Data())
 
-	if sm.sipInfo.SDP == "" {
-		if !strings.Contains(remoteSDP, "a=mid:") {
-			remoteSDP += "a=mid:0\r\n"
+	if !strings.Contains(remoteSDP, "a=mid:") {
+		lines := strings.Split(remoteSDP, "\r\n")
+		for idx, line := range lines {
+			if strings.HasPrefix(line, "m=audio") {
+				lines = append(lines[:idx+2], lines[idx+1:]...)
+				lines[idx+1] = "a=mid:0"
+				break
+			}
 		}
-		if !strings.Contains(remoteSDP, "a=sendrecv") {
-			remoteSDP += "a=sendrecv\r\n"
+		for idx, line := range lines {
+			if strings.HasPrefix(line, "m=video") {
+				lines = append(lines[:idx+2], lines[idx+1:]...)
+				lines[idx+1] = "a=mid:1"
+				break
+			}
 		}
+		remoteSDP = strings.Join(lines, "\r\n")
+	}
+	if !strings.Contains(remoteSDP, "a=sendrecv") {
+		lines := strings.Split(remoteSDP, "\r\n")
+		for idx, line := range lines {
+			if strings.HasPrefix(line, "m=audio") {
+				lines = append(lines[:idx+2], lines[idx+1:]...)
+				lines[idx+1] = "a=sendrecv"
+				break
+			}
+		}
+		for idx, line := range lines {
+			if strings.HasPrefix(line, "m=video") {
+				lines = append(lines[:idx+2], lines[idx+1:]...)
+				lines[idx+1] = "a=sendrecv"
+				break
+			}
+		}
+		remoteSDP = strings.Join(lines, "\r\n")
+	}
 
+	if sm.sipInfo.SDP == "" {
 		err = sm.webrtc.SetRemoteDescription(WebRTCSessionDescription{
 			Type: webrtc.SDPTypeAnswer,
 			SDP:  remoteSDP,
@@ -633,6 +663,36 @@ func (sm *SIPWebRTCManager) Start() (string, error) {
 	return remoteSDP, nil
 }
 
+func (sm *SIPWebRTCManager) StartTalk() error {
+	startTalk := sm.makeMessage(fmt.Sprintf("deviceId:%s;startTalk", sm.sipInfo.DeviceID))
+	if err := sm.writeWebsocket(startTalk); err != nil {
+		return fmt.Errorf("could not send startTalk over websocket: %w", err)
+	}
+	startTalkResponse, err := sm.readWebsocket()
+	if err != nil {
+		return fmt.Errorf("could not read startTalk response: %w", err)
+	}
+	if err = sm.verify202Accepted(startTalkResponse); err != nil {
+		return fmt.Errorf("could not parse 202 accepted: %w", err)
+	}
+	return nil
+}
+
+func (sm *SIPWebRTCManager) StopTalk() error {
+	stopTalk := sm.makeMessage(fmt.Sprintf("deviceId:%s;stopTalk", sm.sipInfo.DeviceID))
+	if err := sm.writeWebsocket(stopTalk); err != nil {
+		return fmt.Errorf("could not send startTalk over websocket: %w", err)
+	}
+	stopTalkResponse, err := sm.readWebsocket()
+	if err != nil {
+		return fmt.Errorf("could not read startTalk response: %w", err)
+	}
+	if err = sm.verify202Accepted(stopTalkResponse); err != nil {
+		return fmt.Errorf("could not parse 202 accepted: %w", err)
+	}
+	return nil
+}
+
 func (sm *SIPWebRTCManager) Close() {
 	sm.inviteRespMsgLock.Lock()
 	defer sm.inviteRespMsgLock.Unlock()
@@ -648,7 +708,9 @@ func (sm *SIPWebRTCManager) Close() {
 		sm.tlsKeylogWriter.Close()
 	}
 
-	sm.webrtc.Close()
+	if sm.sipInfo.SDP == "" {
+		sm.webrtc.Close()
+	}
 }
 
 func init() {
