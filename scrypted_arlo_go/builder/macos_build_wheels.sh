@@ -43,6 +43,8 @@ test_wheel() (
     fi
 )
 
+brew update
+
 _start_group "Python 3.8"
 install_python 8
 build_wheel 8
