@@ -29,7 +29,7 @@ build_wheel() (
     PY_MINOR=$1
     ln -sf /usr/local/opt/python@3.$PY_MINOR/bin/python3.$PY_MINOR  /usr/local/bin/python_for_build
     /usr/local/bin/python_for_build --version
-    /usr/local/bin/python_for_build -m pip install cibuildwheel==2.16.2 pybindgen
+    /usr/local/bin/python_for_build -m pip install cibuildwheel==2.16.2 pybindgen --break-system-packages
     CIBW_BUILD="cp3$PY_MINOR-*" /usr/local/bin/python_for_build -m cibuildwheel --output-dir wheelhouse scrypted_arlo_go
 )
 
@@ -38,7 +38,7 @@ test_wheel() (
     if [ "$CIBW_ARCHS" == "x86_64" ]
     then
         ln -sf /usr/local/opt/python@3.$PY_MINOR/bin/python3.$PY_MINOR  /usr/local/bin/python_for_build
-        /usr/local/bin/python_for_build -m pip install wheelhouse/*cp3$PY_MINOR*.whl
+        /usr/local/bin/python_for_build -m pip install wheelhouse/*cp3$PY_MINOR*.whl --break-system-packages
         /usr/local/bin/python_for_build -c "import scrypted_arlo_go; print(scrypted_arlo_go)"
     fi
 )
