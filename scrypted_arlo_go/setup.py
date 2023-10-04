@@ -3,7 +3,10 @@ import os
 import shutil
 import subprocess
 import sys
-from distutils.core import Extension
+try:
+    from distutils.core import Extension
+except:
+    from setuptools import Extension
 
 import setuptools
 from setuptools.command.build_ext import build_ext
