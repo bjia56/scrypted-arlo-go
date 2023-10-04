@@ -27,7 +27,7 @@ func main() {
 	}
 
 	log("Launching browser")
-	browser, err := pw.Chromium.Launch(playwright.BrowserTypeLaunchOptions{Headless: playwright.Bool(true)})
+	browser, err := pw.Firefox.Launch(playwright.BrowserTypeLaunchOptions{Headless: playwright.Bool(true)})
 	if err != nil {
 		panic(err)
 	}
