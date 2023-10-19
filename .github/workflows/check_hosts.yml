@@ -7,8 +7,6 @@ on:
   pull_request:
     paths: ["scripts/auth_hosts/**", ".github/workflows/check_hosts.yml"]
   workflow_dispatch:
-  schedule:
-    - cron: "15 4 * * *"
 
 jobs:
   check_hosts:
