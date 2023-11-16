@@ -25,6 +25,11 @@ install_python() (
     brew install python@3.$PY_MINOR
 )
 
+uninstall_python() (
+    PY_MINOR=$1
+    brew uninstall python@3.$PY_MINOR
+)
+
 build_wheel() (
     PY_MINOR=$1
     ln -sf /usr/local/opt/python@3.$PY_MINOR/bin/python3.$PY_MINOR  /usr/local/bin/python_for_build
@@ -49,23 +54,28 @@ _start_group "Python 3.8"
 install_python 8
 build_wheel 8
 test_wheel 8
+uninstall_python 8
 
 _start_group "Python 3.9"
 install_python 9
 build_wheel 9
 test_wheel 9
+uninstall_python 9
 
 _start_group "Python 3.10"
 install_python 10
 build_wheel 10
 test_wheel 10
+uninstall_python 10
 
 _start_group "Python 3.11"
 install_python 11
 build_wheel 11
 test_wheel 11
+uninstall_python 11
 
 _start_group "Python 3.12"
 install_python 12
 build_wheel 12
 test_wheel 12
+uninstall_python 12
