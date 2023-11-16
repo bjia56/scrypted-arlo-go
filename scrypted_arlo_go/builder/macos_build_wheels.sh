@@ -27,7 +27,7 @@ install_python() (
 
 uninstall_python() (
     PY_MINOR=$1
-    brew uninstall python@3.$PY_MINOR
+    brew uninstall python@3.$PY_MINOR || true
 )
 
 build_wheel() (
