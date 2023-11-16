@@ -12,7 +12,11 @@ require (
 	golang.org/x/exp v0.0.0-20230811145659-89c5cff77bcb
 )
 
-require github.com/cenkalti/backoff/v4 v4.2.1 // indirect
+require (
+	github.com/bluenviron/gortsplib/v4 v4.4.0 // indirect
+	github.com/bluenviron/mediacommon v1.5.0 // indirect
+	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
+)
 
 replace github.com/pion/ice/v2 v2.3.8 => github.com/bjia56/ice/v2 v2.0.0-20230624041812-5b83f210873b
 
@@ -20,7 +24,7 @@ replace github.com/jart/gosip v0.0.0-20220818224804-29801cedf805 => github.com/b
 
 require (
 	github.com/davecgh/go-spew v1.1.1
-	github.com/google/uuid v1.3.0
+	github.com/google/uuid v1.4.0
 	github.com/pion/datachannel v1.5.5 // indirect
 	github.com/pion/dtls/v2 v2.2.7 // indirect
 	github.com/pion/ice/v2 v2.3.8 // indirect
@@ -29,7 +33,7 @@ require (
 	github.com/pion/mdns v0.0.7 // indirect
 	github.com/pion/randutil v0.1.0 // indirect
 	github.com/pion/rtcp v1.2.10 // indirect
-	github.com/pion/rtp v1.7.13
+	github.com/pion/rtp v1.8.2
 	github.com/pion/sctp v1.8.7 // indirect
 	github.com/pion/sdp/v3 v3.0.6 // indirect
 	github.com/pion/srtp/v2 v2.0.15 // indirect
@@ -38,8 +42,8 @@ require (
 	github.com/pion/turn/v2 v2.1.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/testify v1.8.4 // indirect
-	golang.org/x/crypto v0.10.0 // indirect
-	golang.org/x/net v0.11.0
-	golang.org/x/sys v0.9.0 // indirect
+	golang.org/x/crypto v0.15.0 // indirect
+	golang.org/x/net v0.18.0
+	golang.org/x/sys v0.14.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
