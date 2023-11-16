@@ -14,6 +14,7 @@ import (
 	"github.com/jart/gosip/sip"
 	"github.com/jart/gosip/util"
 	"github.com/pion/webrtc/v3"
+	"golang.org/x/exp/slices"
 	"golang.org/x/net/websocket"
 )
 
@@ -36,6 +37,10 @@ func randDigits(n int) string {
 
 func genBranch() string {
 	return "z9hG4bK" + randDigits(7)
+}
+
+func isValidCandidate(candidate string) bool {
+	return !strings.Contains(candidate, ":") && !strings.Contains(candidate, ".local")
 }
 
 type Duration = time.Duration
@@ -482,6 +487,16 @@ func (sm *SIPWebRTCManager) Start() (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("could not create local sdp: %w", err)
 		}
+
+		tokens := strings.Split(localSDP, "\r\n")
+		tokens = slices.DeleteFunc[[]string](tokens, func(s string) bool {
+			if strings.HasPrefix(s, "a=candidate:") && !isValidCandidate(s) {
+				sm.Println("Filtered out candidate: %s", s)
+				return true
+			}
+			return false
+		})
+		localSDP = strings.Join(tokens, "\r\n")
 	}
 
 	invite := sm.makeInvite(localSDP)
