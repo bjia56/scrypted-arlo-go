@@ -186,8 +186,8 @@ type SIPWebRTCManager struct {
 	inviteRespMsgLock *sync.Mutex
 }
 
-func NewSIPWebRTCManager(loggerPort int, iceServers []WebRTCICEServer, sipInfo SIPInfo) (*SIPWebRTCManager, error) {
-	wm, err := newWebRTCManager(loggerPort, iceServers, "SIPWebRTCManager")
+func NewSIPWebRTCManager(infoLoggerPort, debugLoggerPort int, iceServers []WebRTCICEServer, sipInfo SIPInfo) (*SIPWebRTCManager, error) {
+	wm, err := newWebRTCManager(infoLoggerPort, debugLoggerPort, iceServers, "SIPWebRTCManager")
 	if err != nil {
 		return nil, err
 	}
@@ -217,9 +217,15 @@ func NewSIPWebRTCManager(loggerPort int, iceServers []WebRTCICEServer, sipInfo S
 	return sm, nil
 }
 
-func (sm *SIPWebRTCManager) Println(msg string, args ...any) {
+func (sm *SIPWebRTCManager) Info(msg string, args ...any) {
 	if sm.webrtc != nil {
-		sm.webrtc.Println(msg, args...)
+		sm.webrtc.Info(msg, args...)
+	}
+}
+
+func (sm *SIPWebRTCManager) Debug(msg string, args ...any) {
+	if sm.webrtc != nil {
+		sm.webrtc.Debug(msg, args...)
 	}
 }
 
@@ -429,7 +435,7 @@ func (sm *SIPWebRTCManager) makeMessage(payload string) *sip.Msg {
 func (sm *SIPWebRTCManager) writeWebsocket(msg *sip.Msg) error {
 	msgStr := msg.String()
 	msgStr = strings.ReplaceAll(msgStr, "WebRTC-UDP", "\"WebRTC-UDP\"")
-	sm.Println("Sending sip message:\n%s", msgStr)
+	sm.Debug("Sending sip message:\n%s", msgStr)
 	sm.wsConn.SetWriteDeadline(time.Now().Add(sm.timeout))
 	_, err := sm.wsConn.Write([]byte(msgStr))
 	return err
@@ -444,7 +450,7 @@ func (sm *SIPWebRTCManager) readWebsocket() (*sip.Msg, error) {
 		return nil, fmt.Errorf("could not read websocket: %w", err)
 	}
 
-	sm.Println("Got sip response:\n%s", string(readBuf[0:n]))
+	sm.Debug("Got sip response:\n%s", string(readBuf[0:n]))
 
 	msg, err := sip.ParseMsg(readBuf[0:n])
 	if err != nil {
@@ -491,7 +497,7 @@ func (sm *SIPWebRTCManager) Start() (string, error) {
 		tokens := strings.Split(localSDP, "\r\n")
 		tokens = slices.DeleteFunc[[]string](tokens, func(s string) bool {
 			if strings.HasPrefix(s, "a=candidate:") && !isValidCandidate(s) {
-				sm.Println("Filtered out candidate: %s", s)
+				sm.Debug("Filtered out candidate: %s", s)
 				return true
 			}
 			return false
@@ -657,21 +663,21 @@ func (sm *SIPWebRTCManager) Start() (string, error) {
 
 			keepAlive := sm.makeMessage("keepAlive")
 			if err = sm.writeWebsocket(keepAlive); err != nil {
-				sm.Println("Could not send keepAlive over websocket: %s", err)
+				sm.Info("Could not send keepAlive over websocket: %s", err)
 				return
 			}
 
 			keepAliveResponse, err := sm.readWebsocket()
 			if err != nil {
-				sm.Println("Could not read keepAlive response: %s", err)
+				sm.Info("Could not read keepAlive response: %s", err)
 			} else if err = sm.verify202Accepted(keepAliveResponse); err != nil {
-				sm.Println("Could not parse 202 accepted: %s", err)
+				sm.Info("Could not parse 202 accepted: %s", err)
 			}
 		}
 	}()
 
 	if sm.sipInfo.SDP == "" {
-		sm.Println("Started SIP push to talk")
+		sm.Info("Started SIP push to talk")
 		sm.webrtc.PrintTimeSinceCreation()
 	}
 

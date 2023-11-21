@@ -57,9 +57,10 @@ const (
 )
 
 type WebRTCManager struct {
-	pc     *webrtc.PeerConnection
-	logger *TCPLogger
-	name   string
+	pc          *webrtc.PeerConnection
+	infoLogger  *TCPLogger
+	debugLogger *TCPLogger
+	name        string
 
 	// for receiving audio RTP packets
 	audioRTP net.Conn
@@ -73,23 +74,28 @@ type WebRTCManager struct {
 	startTime time.Time
 }
 
-func NewWebRTCManager(loggerPort int, iceServers []WebRTCICEServer) (*WebRTCManager, error) {
-	return newWebRTCManager(loggerPort, iceServers, "WebRTCManager")
+func NewWebRTCManager(infoLoggerPort, debugLoggerPort int, iceServers []WebRTCICEServer) (*WebRTCManager, error) {
+	return newWebRTCManager(infoLoggerPort, debugLoggerPort, iceServers, "WebRTCManager")
 }
 
-func newWebRTCManager(loggerPort int, iceServers []WebRTCICEServer, name string) (*WebRTCManager, error) {
-	logger, err := NewTCPLogger(loggerPort, name)
+func newWebRTCManager(infoLoggerPort, debugLoggerPort int, iceServers []WebRTCICEServer, name string) (*WebRTCManager, error) {
+	infoLogger, err := NewTCPLogger(infoLoggerPort, name)
+	if err != nil {
+		return nil, err
+	}
+	debugLogger, err := NewTCPLogger(debugLoggerPort, name)
 	if err != nil {
 		return nil, err
 	}
 
 	mgr := WebRTCManager{
-		logger:        logger,
+		infoLogger:    infoLogger,
+		debugLogger:   debugLogger,
 		name:          name,
 		startTime:     time.Now(),
 		iceCandidates: make(chan WebRTCICECandidate),
 	}
-	mgr.Println("Library version %s built at %s", version, parsedBuildTime.String())
+	mgr.Info("Library version %s built at %s", version, parsedBuildTime.String())
 
 	certificates := []webrtc.Certificate{}
 
@@ -119,7 +125,7 @@ func newWebRTCManager(loggerPort int, iceServers []WebRTCICEServer, name string)
 	}
 
 	webrtcLogger := logging.NewDefaultLoggerFactory()
-	webrtcLogger.Writer = logger
+	webrtcLogger.Writer = debugLogger
 	s := webrtc.SettingEngine{
 		LoggerFactory: webrtcLogger,
 	}
@@ -143,7 +149,7 @@ func newWebRTCManager(loggerPort int, iceServers []WebRTCICEServer, name string)
 		}
 	})
 	mgr.pc.OnConnectionStateChange(func(s webrtc.PeerConnectionState) {
-		mgr.Println("OnConnectionStateChange %s", s.String())
+		mgr.Debug("OnConnectionStateChange %s", s.String())
 		if s == webrtc.PeerConnectionStateDisconnected {
 			mgr.Close()
 		} else if s == webrtc.PeerConnectionStateConnected {
@@ -151,13 +157,13 @@ func newWebRTCManager(loggerPort int, iceServers []WebRTCICEServer, name string)
 		}
 	})
 	mgr.pc.OnICEConnectionStateChange(func(is webrtc.ICEConnectionState) {
-		mgr.Println("OnICEConnectionStateChange %s", is.String())
+		mgr.Debug("OnICEConnectionStateChange %s", is.String())
 		if is == webrtc.ICEConnectionStateConnected {
 			mgr.PrintTimeSinceCreation()
 		}
 	})
 	mgr.pc.OnTrack(func(tr *webrtc.TrackRemote, r *webrtc.RTPReceiver) {
-		mgr.Println("Remote sent us a track we will ignore: %s", tr.Codec().MimeType)
+		mgr.Debug("Remote sent us a track we will ignore: %s", tr.Codec().MimeType)
 		// we don't expect any useful audio to come back over the channel,
 		// so just read it and move on
 		go func() {
@@ -172,16 +178,16 @@ func newWebRTCManager(loggerPort int, iceServers []WebRTCICEServer, name string)
 	return &mgr, nil
 }
 
-func (mgr *WebRTCManager) Printf(msg string, args ...any) {
-	mgr.logger.Send(fmt.Sprintf(msg, args...))
+func (mgr *WebRTCManager) Info(msg string, args ...any) {
+	mgr.infoLogger.Send(fmt.Sprintf(msg+"\n", args...))
 }
 
-func (mgr *WebRTCManager) Println(msg string, args ...any) {
-	mgr.Printf(msg+"\n", args...)
+func (mgr *WebRTCManager) Debug(msg string, args ...any) {
+	mgr.debugLogger.Send(fmt.Sprintf(msg+"\n", args...))
 }
 
 func (mgr *WebRTCManager) PrintTimeSinceCreation() {
-	mgr.Println("Time elapsed since creation of %s: %s", mgr.name, time.Since(mgr.startTime).String())
+	mgr.Debug("Time elapsed since creation of %s: %s", mgr.name, time.Since(mgr.startTime).String())
 }
 
 /*
@@ -255,7 +261,7 @@ func (mgr *WebRTCManager) initializeRTPListener(kind, codecMimeType string) (con
 				return
 			}
 			if DEBUG {
-				mgr.Println(spew.Sdump(pkt))
+				mgr.Debug(spew.Sdump(pkt))
 			}
 		}
 	}()
@@ -271,14 +277,14 @@ func (mgr *WebRTCManager) initializeRTPListener(kind, codecMimeType string) (con
 			n, _, err := conn.(*net.UDPConn).ReadFrom(inboundRTPPacket)
 			if err != nil {
 				if !errors.Is(err, net.ErrClosed) {
-					mgr.Println("Error during %s track read: %s", kind, err)
+					mgr.Info("Error during %s track read: %s", kind, err)
 				}
 				return
 			}
 
 			var pkt rtp.Packet
 			if err = pkt.Unmarshal(inboundRTPPacket[:n]); err != nil {
-				mgr.Println("Error unmarshaling RTP packet: %s", err)
+				mgr.Info("Error unmarshaling RTP packet: %s", err)
 				continue
 			}
 
@@ -291,7 +297,7 @@ func (mgr *WebRTCManager) initializeRTPListener(kind, codecMimeType string) (con
 
 			if err = track.WriteRTP(&pkt); err != nil {
 				if !errors.Is(err, io.ErrClosedPipe) {
-					mgr.Println("Error writing to %s track: %s", kind, err)
+					mgr.Info("Error writing to %s track: %s", kind, err)
 				}
 				return
 			}
@@ -303,7 +309,7 @@ func (mgr *WebRTCManager) initializeRTPListener(kind, codecMimeType string) (con
 		return conn, 0, err
 	}
 
-	mgr.Println("Created %s RTP listener at udp://127.0.0.1:%d", kind, port)
+	mgr.Info("Created %s RTP listener at udp://127.0.0.1:%d", kind, port)
 	return conn, port, nil
 }
 
@@ -337,9 +343,9 @@ func (mgr *WebRTCManager) AddICECandidate(c WebRTCICECandidateInit) error {
 }
 
 func (mgr *WebRTCManager) WaitForICEComplete() {
-	mgr.Println("Waiting for ICE candidate gathering to finish")
+	mgr.Info("Waiting for ICE candidate gathering to finish")
 	<-mgr.iceCompleteSentinel
-	mgr.Println("ICE candidate gathering complete")
+	mgr.Info("ICE candidate gathering complete")
 }
 
 func (mgr *WebRTCManager) GetNextICECandidate() (WebRTCICECandidate, error) {
@@ -357,5 +363,6 @@ func (mgr *WebRTCManager) Close() {
 	mgr.audioRTP.Close()
 	mgr.pc.Close()
 	mgr.PrintTimeSinceCreation()
-	mgr.logger.Close()
+	mgr.infoLogger.Close()
+	mgr.debugLogger.Close()
 }
