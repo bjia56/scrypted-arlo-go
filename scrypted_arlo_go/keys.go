@@ -24,16 +24,25 @@ func GenerateRSAKeys(bitsize int) (KeysOutput, error) {
 		return KeysOutput{}, fmt.Errorf("could not validate key: %w", err)
 	}
 
+	privKeyBytes, err := x509.MarshalPKCS8PrivateKey(priv)
+	if err != nil {
+		return KeysOutput{}, fmt.Errorf("could not marshal key: %w", err)
+	}
+	pubKeyBytes, err := x509.MarshalPKIXPublicKey(priv.Public())
+	if err != nil {
+		return KeysOutput{}, fmt.Errorf("could not marshal key: %w", err)
+	}
+
 	privPEM := pem.EncodeToMemory(
 		&pem.Block{
-			Type:  "RSA PRIVATE KEY",
-			Bytes: x509.MarshalPKCS1PrivateKey(priv),
+			Type:  "PRIVATE KEY",
+			Bytes: privKeyBytes,
 		},
 	)
 	pubPEM := pem.EncodeToMemory(
 		&pem.Block{
-			Type:  "RSA PUBLIC KEY",
-			Bytes: x509.MarshalPKCS1PublicKey(&priv.PublicKey),
+			Type:  "PUBLIC KEY",
+			Bytes: pubKeyBytes,
 		},
 	)
 

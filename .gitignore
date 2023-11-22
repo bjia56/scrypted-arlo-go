@@ -4,3 +4,4 @@ Pipfile*
 *test.go
 VERSION.txt
 BUILDTIME.txt
+venv
