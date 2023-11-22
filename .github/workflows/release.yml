@@ -17,6 +17,11 @@ on:
         type: boolean
         default: false
 
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
 jobs:
   validate-args:
     runs-on: ubuntu-latest
@@ -63,13 +68,13 @@ jobs:
     if: ${{ inputs.create-release }}
     needs: release
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.PAT }}
+        uses: actions/checkout@v4
+
+      - name: Pull latest
+        run: |
+          git pull
 
       - name: Set up Python
         uses: actions/setup-python@v1
@@ -84,4 +89,13 @@ jobs:
         run: python ./scripts/generate_pypi_links.py ${{ inputs.version }}
 
       - name: Commit and push
-        uses: stefanzweifel/git-auto-commit-action@v4
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_user_name: "github-actions[bot]"
+          commit_user_email: "github-actions[bot]@users.noreply.github.com"
+          commit_author: "github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+          commit_message: Update PyPI
+
+  publish-pypi:
+    needs: update-pypi
+    uses: ./.github/workflows/pages.yml
