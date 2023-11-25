@@ -475,12 +475,16 @@ func (sm *SIPWebRTCManager) sendAck(msg *sip.Msg) error {
 	return sm.writeWebsocket(sm.makeAck(msg))
 }
 
-func (sm *SIPWebRTCManager) Start() (string, error) {
+func (sm *SIPWebRTCManager) Start() (remoteSDP string, err error) {
 	if sm.sipInfo.SDP == "" && sm.webrtc.audioRTP == nil {
 		return "", fmt.Errorf("audio rtp listener not initialized")
 	}
 
-	var err error
+	defer func() {
+		if err != nil {
+			sm.Close()
+		}
+	}()
 
 	if err = sm.connectWebsocket(); err != nil {
 		return "", fmt.Errorf("could not connect websocket: %w", err)
@@ -573,7 +577,7 @@ func (sm *SIPWebRTCManager) Start() (string, error) {
 		return "", fmt.Errorf("unexpected invite response content type %q", inviteResponse.Payload.ContentType())
 	}
 
-	remoteSDP := string(inviteResponse.Payload.Data())
+	remoteSDP = string(inviteResponse.Payload.Data())
 
 	if !strings.Contains(remoteSDP, "a=mid:") {
 		lines := strings.Split(remoteSDP, "\r\n")
@@ -664,16 +668,19 @@ func (sm *SIPWebRTCManager) Start() (string, error) {
 			keepAlive := sm.makeMessage("keepAlive")
 			if err = sm.writeWebsocket(keepAlive); err != nil {
 				sm.Info("Could not send keepAlive over websocket: %s", err)
-				return
+				break
 			}
 
 			keepAliveResponse, err := sm.readWebsocket()
 			if err != nil {
 				sm.Info("Could not read keepAlive response: %s", err)
+				break
 			} else if err = sm.verify202Accepted(keepAliveResponse); err != nil {
 				sm.Info("Could not parse 202 accepted: %s", err)
+				break
 			}
 		}
+		sm.Close()
 	}()
 
 	if sm.sipInfo.SDP == "" {
