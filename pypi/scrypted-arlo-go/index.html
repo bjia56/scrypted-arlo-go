@@ -30,6 +30,29 @@
     font-weight: 300; }
    .elem { margin: 1rem 0rem; }
   </style>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+  <script>
+    function annotateAll() {
+      const anchors = Array.from(document.links);
+      fetch("https://api.github.com/repos/bjia56/scrypted-arlo-go/releases")
+      .then(async resp => {
+         let releases = await resp.json();
+         let urlCountMap = {};
+         releases.map(release => {
+            release.assets.map(asset => {
+               urlCountMap[asset.browser_download_url] = asset.download_count;
+            })
+         })
+
+         anchors.map(anchor => {
+            anchor.innerText = anchor.innerText + " (" + urlCountMap[anchor.href] + " downloads)";
+         });
+      })
+      .catch(e => console.log(e));
+    }
+
+    $(document).ready(annotateAll);
+  </script>
   <title>
    Scrypted Python Wheels
   </title>
