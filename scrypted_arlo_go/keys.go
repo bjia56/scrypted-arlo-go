@@ -24,10 +24,7 @@ func GenerateRSAKeys(bitsize int) (KeysOutput, error) {
 		return KeysOutput{}, fmt.Errorf("could not validate key: %w", err)
 	}
 
-	privKeyBytes, err := x509.MarshalPKCS8PrivateKey(priv)
-	if err != nil {
-		return KeysOutput{}, fmt.Errorf("could not marshal key: %w", err)
-	}
+	privKeyBytes := x509.MarshalPKCS1PrivateKey(priv)
 	pubKeyBytes, err := x509.MarshalPKIXPublicKey(priv.Public())
 	if err != nil {
 		return KeysOutput{}, fmt.Errorf("could not marshal key: %w", err)
@@ -35,7 +32,7 @@ func GenerateRSAKeys(bitsize int) (KeysOutput, error) {
 
 	privPEM := pem.EncodeToMemory(
 		&pem.Block{
-			Type:  "PRIVATE KEY",
+			Type:  "RSA PRIVATE KEY",
 			Bytes: privKeyBytes,
 		},
 	)
