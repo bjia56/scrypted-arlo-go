@@ -2,7 +2,7 @@ name: Build
 
 on:
   push:
-    branches: ["master"]
+    branches: ["main"]
     paths: ["scrypted_arlo_go/**", ".github/workflows/build_wheel.yml"]
   pull_request:
     paths: ["scrypted_arlo_go/**", ".github/workflows/build_wheel.yml"]
