@@ -8,6 +8,7 @@ require (
 )
 
 require (
+	github.com/beatgammit/rtsp v0.0.0-20150328165920-b2346852d8f4
 	github.com/tmaxmax/go-sse v0.6.0
 	golang.org/x/exp v0.0.0-20230811145659-89c5cff77bcb
 )
@@ -17,6 +18,8 @@ require github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 replace github.com/pion/ice/v2 v2.3.8 => github.com/bjia56/ice/v2 v2.0.0-20230624041812-5b83f210873b
 
 replace github.com/jart/gosip v0.0.0-20220818224804-29801cedf805 => github.com/bjia56/gosip v0.0.0-20230624042356-af04e85539a6
+
+replace github.com/beatgammit/rtsp v0.0.0-20150328165920-b2346852d8f4 => github.com/bjia56/rtsp v0.0.0-20231211164110-f608a589d75b
 
 require (
 	github.com/davecgh/go-spew v1.1.1
@@ -38,8 +41,8 @@ require (
 	github.com/pion/turn/v2 v2.1.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/testify v1.8.4 // indirect
-	golang.org/x/crypto v0.10.0 // indirect
-	golang.org/x/net v0.11.0
-	golang.org/x/sys v0.9.0 // indirect
+	golang.org/x/crypto v0.16.0 // indirect
+	golang.org/x/net v0.19.0
+	golang.org/x/sys v0.15.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
