@@ -48,7 +48,7 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: wheels-macos
+          name: wheels-macos-${{ matrix.arch_cibw_go[0] }}
           path: ./wheelhouse/*.whl
 
   build_linux_x86_64:
@@ -117,7 +117,7 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: wheels-linux-arm64
+          name: wheels-linux-arm64-${{ matrix.python3_version }}
           path: ./wheelhouse/*.whl
 
   build_linux_armv7l:
@@ -159,7 +159,7 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: wheels-linux-armv7l
+          name: wheels-linux-armv7l-${{ matrix.python3_version }}
           path: /tmp/output/*.whl
 
   build_windows:
