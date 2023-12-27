@@ -15,10 +15,10 @@ type LocalStreamProxy struct {
 	infoLogger  *TCPLogger
 	debugLogger *TCPLogger
 
-	basestationModel string
-	basestationIP    string
-	certPEM          string
-	keyPEM           string
+	basestationHostname string
+	basestationIP       string
+	certPEM             string
+	keyPEM              string
 
 	tlsConfig    *tls.Config
 	listener     net.Listener
@@ -28,7 +28,7 @@ type LocalStreamProxy struct {
 
 func NewLocalStreamProxy(
 	infoLoggerPort, debugLoggerPort int,
-	basestationModel string,
+	basestationHostname string,
 	basestationIP string,
 	certPEM string,
 	keyPEM string,
@@ -49,12 +49,12 @@ func NewLocalStreamProxy(
 	}
 
 	return &LocalStreamProxy{
-		infoLogger:       infoLogger,
-		debugLogger:      debugLogger,
-		basestationModel: basestationModel,
-		basestationIP:    basestationIP,
-		certPEM:          certPEM,
-		keyPEM:           keyPEM,
+		infoLogger:          infoLogger,
+		debugLogger:         debugLogger,
+		basestationHostname: basestationHostname,
+		basestationIP:       basestationIP,
+		certPEM:             certPEM,
+		keyPEM:              keyPEM,
 		tlsConfig: &tls.Config{
 			Certificates:       []tls.Certificate{cert},
 			InsecureSkipVerify: true,
@@ -188,7 +188,7 @@ func (l *LocalStreamProxy) handleClient(clientConn net.Conn) {
 		}
 
 		s := rr.String()
-		s = strings.ReplaceAll(s, fmt.Sprintf("rtsp://localhost:%d", l.listenerPort), fmt.Sprintf("rtsp://%s.local", l.basestationModel))
+		s = strings.ReplaceAll(s, fmt.Sprintf("rtsp://localhost:%d", l.listenerPort), fmt.Sprintf("rtsp://%s", l.basestationHostname))
 		s = strings.ReplaceAll(s, "Cseq:", "CSeq:")
 		l.Debug("Outgoing:\n%s", s)
 
