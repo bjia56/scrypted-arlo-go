@@ -46,9 +46,9 @@ jobs:
             MACOSX_DEPLOYMENT_TARGET=10.15
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: wheels
+          name: wheels-macos
           path: ./wheelhouse/*.whl
 
   build_linux_x86_64:
@@ -77,9 +77,9 @@ jobs:
             go install golang.org/x/tools/cmd/goimports@latest
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: wheels
+          name: wheels-linux-x86_64
           path: ./wheelhouse/*.whl
 
   build_linux_arm64:
@@ -115,9 +115,9 @@ jobs:
             go install golang.org/x/tools/cmd/goimports@latest
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: wheels
+          name: wheels-linux-arm64
           path: ./wheelhouse/*.whl
 
   build_linux_armv7l:
@@ -157,9 +157,9 @@ jobs:
           tar -zcvf /tmp/output.tar.gz /tmp/output
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: wheels
+          name: wheels-linux-armv7l
           path: /tmp/output/*.whl
 
   build_windows:
@@ -200,9 +200,9 @@ jobs:
             CGO_ENABLED=1
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: wheels
+          name: wheels-windows
           path: ./wheelhouse/*.whl
 
   all_builds_passed:
