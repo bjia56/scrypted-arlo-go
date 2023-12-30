@@ -9,8 +9,8 @@ require (
 
 require (
 	github.com/beatgammit/rtsp v0.0.0-20150328165920-b2346852d8f4
-	github.com/tmaxmax/go-sse v0.6.0
-	golang.org/x/exp v0.0.0-20230811145659-89c5cff77bcb
+	github.com/tmaxmax/go-sse v0.7.0
+	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa
 )
 
 require github.com/cenkalti/backoff/v4 v4.2.1 // indirect
