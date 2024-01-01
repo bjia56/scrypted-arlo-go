@@ -137,7 +137,7 @@ jobs:
         uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: Build 3.${{ matrix.python3_version }} wheels via Docker
         uses: docker/build-push-action@v3
