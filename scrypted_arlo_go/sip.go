@@ -172,6 +172,83 @@ func ParseAuthHeader(header string) (AuthHeader, error) {
 	}, nil
 }
 
+func cleanSDP(sdp string) string {
+	lines := strings.Split(sdp, "\r\n")
+	audioSection := false
+	videoSection := false
+	needsAudioMid := true
+	needsVideoMid := true
+	needsAudioDirection := true
+	needsVideoDirection := true
+	for _, line := range lines {
+		if strings.HasPrefix(line, "m=audio") {
+			audioSection = true
+			videoSection = false
+			continue
+		}
+		if strings.HasPrefix(line, "m=video") {
+			audioSection = false
+			videoSection = true
+			continue
+		}
+		if audioSection {
+			if strings.HasPrefix(line, "a=mid") {
+				needsAudioMid = false
+			} else if strings.HasPrefix(line, "a=send") || strings.HasPrefix(line, "a=recv") {
+				needsAudioDirection = false
+			}
+			continue
+		}
+		if videoSection {
+			if strings.HasPrefix(line, "a=mid") {
+				needsVideoMid = false
+			} else if strings.HasPrefix(line, "a=send") || strings.HasPrefix(line, "a=recv") {
+				needsVideoDirection = false
+			}
+			continue
+		}
+	}
+
+	if needsAudioMid {
+		for idx, line := range lines {
+			if strings.HasPrefix(line, "m=audio") {
+				lines = append(lines[:idx+2], lines[idx+1:]...)
+				lines[idx+1] = "a=mid:0"
+				break
+			}
+		}
+	}
+	if needsVideoMid {
+		for idx, line := range lines {
+			if strings.HasPrefix(line, "m=video") {
+				lines = append(lines[:idx+2], lines[idx+1:]...)
+				lines[idx+1] = "a=mid:1"
+				break
+			}
+		}
+	}
+	if needsAudioDirection {
+		for idx, line := range lines {
+			if strings.HasPrefix(line, "m=audio") {
+				lines = append(lines[:idx+2], lines[idx+1:]...)
+				lines[idx+1] = "a=sendrecv"
+				break
+			}
+		}
+	}
+	if needsVideoDirection {
+		for idx, line := range lines {
+			if strings.HasPrefix(line, "m=video") {
+				lines = append(lines[:idx+2], lines[idx+1:]...)
+				lines[idx+1] = "a=sendonly"
+				break
+			}
+		}
+	}
+
+	return strings.Join(lines, "\r\n")
+}
+
 type SIPWebRTCManager struct {
 	webrtc  *WebRTCManager
 	sipInfo SIPInfo
@@ -578,43 +655,7 @@ func (sm *SIPWebRTCManager) Start() (remoteSDP string, err error) {
 	}
 
 	remoteSDP = string(inviteResponse.Payload.Data())
-
-	if !strings.Contains(remoteSDP, "a=mid:") {
-		lines := strings.Split(remoteSDP, "\r\n")
-		for idx, line := range lines {
-			if strings.HasPrefix(line, "m=audio") {
-				lines = append(lines[:idx+2], lines[idx+1:]...)
-				lines[idx+1] = "a=mid:0"
-				break
-			}
-		}
-		for idx, line := range lines {
-			if strings.HasPrefix(line, "m=video") {
-				lines = append(lines[:idx+2], lines[idx+1:]...)
-				lines[idx+1] = "a=mid:1"
-				break
-			}
-		}
-		remoteSDP = strings.Join(lines, "\r\n")
-	}
-	if !strings.Contains(remoteSDP, "a=sendrecv") {
-		lines := strings.Split(remoteSDP, "\r\n")
-		for idx, line := range lines {
-			if strings.HasPrefix(line, "m=audio") {
-				lines = append(lines[:idx+2], lines[idx+1:]...)
-				lines[idx+1] = "a=sendrecv"
-				break
-			}
-		}
-		for idx, line := range lines {
-			if strings.HasPrefix(line, "m=video") {
-				lines = append(lines[:idx+2], lines[idx+1:]...)
-				lines[idx+1] = "a=sendrecv"
-				break
-			}
-		}
-		remoteSDP = strings.Join(lines, "\r\n")
-	}
+	remoteSDP = cleanSDP(remoteSDP)
 
 	if sm.sipInfo.SDP == "" {
 		err = sm.webrtc.SetRemoteDescription(WebRTCSessionDescription{
