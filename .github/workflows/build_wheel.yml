@@ -64,7 +64,7 @@ jobs:
         with:
           package-dir: ./scrypted_arlo_go
         env:
-          CIBW_BUILD: "cp3*_x86_64"
+          CIBW_BUILD: "cp3*_x86_64 pp3*_x86_64"
           CIBW_SKIP: "cp36-* *-musllinux_x86_64"
           CIBW_ARCHS: "native"
           CIBW_ENVIRONMENT: >
