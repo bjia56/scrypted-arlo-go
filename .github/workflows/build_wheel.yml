@@ -24,7 +24,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
           go-version: "1.19.x"
 
@@ -48,7 +48,7 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: wheels-macos
+          name: wheels-macos-${{ matrix.arch_cibw_go[0] }}
           path: ./wheelhouse/*.whl
 
   build_linux_x86_64:
@@ -95,7 +95,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
 
       - name: Build 3.${{ matrix.python3_version }} wheels
         uses: pypa/cibuildwheel@v2.16.2
@@ -117,7 +117,7 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: wheels-linux-arm64
+          name: wheels-linux-arm64-${{ matrix.python3_version }}
           path: ./wheelhouse/*.whl
 
   build_linux_armv7l:
@@ -134,7 +134,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -159,7 +159,7 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: wheels-linux-armv7l
+          name: wheels-linux-armv7l-${{ matrix.python3_version }}
           path: /tmp/output/*.whl
 
   build_windows:
@@ -171,7 +171,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
           go-version: "1.19.x"
 
