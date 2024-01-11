@@ -140,7 +140,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build 3.${{ matrix.python3_version }} wheels via Docker
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v5
         with:
           context: ./scrypted_arlo_go
           file: ./scrypted_arlo_go/builder/Dockerfile.armv7l
