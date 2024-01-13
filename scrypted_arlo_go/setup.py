@@ -20,11 +20,11 @@ if sys.platform == 'darwin':
     # on macos PYTHON_BINARY_PATH must be python bin installed from python.org
     PYTHON_BINARY = os.getenv("PYTHON_BINARY_PATH", sys.executable)
     if PYTHON_BINARY == sys.executable:
-        subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'pybindgen'])
+        subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'git+https://github.com/bjia56/pybindgen.git@pypy-fixes'])
 else:
     # linux & windows
     PYTHON_BINARY = sys.executable
-    subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'pybindgen'])
+    subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'git+https://github.com/bjia56/pybindgen.git@pypy-fixes'])
 
 def _generate_path_with_gopath() -> str:
     go_path = subprocess.check_output(["go", "env", "GOPATH"]).decode("utf-8").strip()

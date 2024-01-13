@@ -64,7 +64,7 @@ jobs:
         with:
           package-dir: ./scrypted_arlo_go
         env:
-          CIBW_BUILD: "cp3*_x86_64"
+          CIBW_BUILD: "cp3*_x86_64 pp3*_x86_64"
           CIBW_SKIP: "cp36-* *-musllinux_x86_64"
           CIBW_ARCHS: "native"
           CIBW_ENVIRONMENT: >
@@ -102,7 +102,7 @@ jobs:
         with:
           package-dir: ./scrypted_arlo_go
         env:
-          CIBW_BUILD: "cp3${{ matrix.python3_version }}*_aarch64"
+          CIBW_BUILD: "cp3${{ matrix.python3_version }}*_aarch64 pp3${{ matrix.python3_version }}*_aarch64"
           CIBW_SKIP: "cp36-* *-musllinux_aarch64"
           CIBW_ARCHS: "aarch64"
           CIBW_ENVIRONMENT: >
@@ -192,7 +192,7 @@ jobs:
         with:
           package-dir: ./scrypted_arlo_go
         env:
-          CIBW_BUILD: "cp3*"
+          CIBW_BUILD: "cp3* pp3*"
           CIBW_SKIP: "cp36-*"
           CIBW_ARCHS: "native"
           CIBW_ENVIRONMENT: >
