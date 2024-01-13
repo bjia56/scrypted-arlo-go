@@ -37,7 +37,7 @@ build_wheel() (
     PY_MINOR=$1
     ln -sf /usr/local/opt/python@3.$PY_MINOR/bin/python3.$PY_MINOR  /usr/local/bin/python_for_build
     /usr/local/bin/python_for_build --version
-    /usr/local/bin/python_for_build -m pip install cibuildwheel==2.16.2 setuptools https://github.com/bjia56/pybindgen/archive/pypy-fixes.zip --break-system-packages
+    /usr/local/bin/python_for_build -m pip install cibuildwheel==2.16.2 setuptools git+https://github.com/bjia56/pybindgen.git@pypy-fixes --break-system-packages
     CIBW_BUILD="cp3$PY_MINOR-*" /usr/local/bin/python_for_build -m cibuildwheel --output-dir wheelhouse scrypted_arlo_go
 )
 
