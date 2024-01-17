@@ -2,7 +2,8 @@ FROM ghcr.io/bjia56/armv7l-wheel-builder:main
 ARG PYTHON3_VERSION=9
 ARG GO_VERSION=1.21.6
 
-RUN curl -o /tmp/go.tar.gz -L https://go.dev/dl/go${GO_VERSION}.linux-armv6l.tar.gz && \
+RUN rm -rf /usr/local/go && \
+    curl -o /tmp/go.tar.gz -L https://go.dev/dl/go${GO_VERSION}.linux-armv6l.tar.gz && \
     tar -C /usr/local -xzf /tmp/go.tar.gz
 
 RUN go install github.com/go-python/gopy@v0.4.5 && \
