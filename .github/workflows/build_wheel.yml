@@ -9,6 +9,9 @@ on:
   workflow_dispatch:
   workflow_call:
 
+env:
+  GO_VERSION: 1.21.6
+
 jobs:
   build_macos:
     #if: false
@@ -26,7 +29,7 @@ jobs:
       - name: set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.19.x"
+          go-version: ${{ env.GO_VERSION }}
 
       - name: install gopy
         run: go install github.com/go-python/gopy@v0.4.5
@@ -54,7 +57,7 @@ jobs:
   build_linux_x86_64:
     #if: false
     name: Linux x86_64
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -71,7 +74,7 @@ jobs:
             PATH=$PATH:/usr/local/go/bin
             CGO_ENABLED=1
           CIBW_BEFORE_ALL_LINUX: |
-            curl -o go.tar.gz https://dl.google.com/go/go1.19.9.linux-amd64.tar.gz
+            curl -o go.tar.gz https://dl.google.com/go/go${{ env.GO_VERSION }}.linux-amd64.tar.gz
             tar -C /usr/local -xzf go.tar.gz
             go install github.com/go-python/gopy@v0.4.5
             go install golang.org/x/tools/cmd/goimports@latest
@@ -85,7 +88,7 @@ jobs:
   build_linux_arm64:
     #if: false
     name: Linux arm64
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
@@ -109,7 +112,7 @@ jobs:
             PATH=$PATH:/usr/local/go/bin
             CGO_ENABLED=1
           CIBW_BEFORE_ALL_LINUX: |
-            curl -o go.tar.gz https://dl.google.com/go/go1.19.9.linux-arm64.tar.gz
+            curl -o go.tar.gz https://dl.google.com/go/go${{ env.GO_VERSION }}.linux-arm64.tar.gz
             tar -C /usr/local -xzf go.tar.gz
             go install github.com/go-python/gopy@v0.4.5
             go install golang.org/x/tools/cmd/goimports@latest
@@ -146,6 +149,7 @@ jobs:
           file: ./scrypted_arlo_go/builder/Dockerfile.armv7l
           build-args: |
             PYTHON3_VERSION=${{ matrix.python3_version }}
+            GO_VERSION=${{ env.GO_VERSION }}
           push: false
           platforms: linux/armhf
           tags: armv7l:latest
@@ -173,7 +177,7 @@ jobs:
       - name: set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.19.x"
+          go-version: ${{ env.GO_VERSION }}
 
       - name: install gopy
         run: |
