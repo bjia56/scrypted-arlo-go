@@ -577,7 +577,8 @@ func (sm *SIPWebRTCManager) Start() (remoteSDP string, err error) {
 
 		tokens := strings.Split(localSDP, "\r\n")
 		tokens = slices.DeleteFunc[[]string](tokens, func(s string) bool {
-			if strings.HasPrefix(s, "a=candidate:") && !isValidCandidate(s) {
+			const candidatePrefix = "a=candidate:"
+			if strings.HasPrefix(s, candidatePrefix) && !isValidCandidate(s[len(candidatePrefix):]) {
 				sm.Debug("Filtered out candidate: %s", s)
 				return true
 			}
