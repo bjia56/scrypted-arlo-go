@@ -15,7 +15,7 @@ require (
 
 require github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 
-replace github.com/pion/ice/v2 v2.3.8 => github.com/bjia56/ice/v2 v2.0.0-20230624041812-5b83f210873b
+replace github.com/pion/ice/v2 v2.3.11 => github.com/bjia56/ice/v2 v2.0.0-20230624041812-5b83f210873b
 
 replace github.com/jart/gosip v0.0.0-20220818224804-29801cedf805 => github.com/bjia56/gosip v0.0.0-20230624042356-af04e85539a6
 
