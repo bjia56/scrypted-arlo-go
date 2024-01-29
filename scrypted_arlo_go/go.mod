@@ -23,7 +23,7 @@ replace github.com/beatgammit/rtsp v0.0.0-20150328165920-b2346852d8f4 => github.
 
 require (
 	github.com/davecgh/go-spew v1.1.1
-	github.com/google/uuid v1.5.0
+	github.com/google/uuid v1.6.0
 	github.com/pion/datachannel v1.5.5 // indirect
 	github.com/pion/dtls/v2 v2.2.7 // indirect
 	github.com/pion/ice/v2 v2.3.11 // indirect
