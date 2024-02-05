@@ -9,11 +9,9 @@ require (
 
 require (
 	github.com/beatgammit/rtsp v0.0.0-20150328165920-b2346852d8f4
-	github.com/tmaxmax/go-sse v0.7.0
+	github.com/tmaxmax/go-sse v0.8.0
 	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa
 )
-
-require github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 
 replace github.com/pion/ice/v2 v2.3.11 => github.com/bjia56/ice/v2 v2.0.0-20230624041812-5b83f210873b
 
