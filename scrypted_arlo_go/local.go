@@ -12,8 +12,9 @@ import (
 )
 
 type LocalStreamProxy struct {
-	infoLogger  *TCPLogger
-	debugLogger *TCPLogger
+	infoLogger   *TCPLogger
+	debugLogger  *TCPLogger
+	extraVerbose bool
 
 	basestationHostname string
 	basestationIP       string
@@ -60,6 +61,10 @@ func NewLocalStreamProxy(
 			InsecureSkipVerify: true,
 		},
 	}, nil
+}
+
+func (l *LocalStreamProxy) MakeExtraVerbose() {
+	l.extraVerbose = true
 }
 
 func (l *LocalStreamProxy) Info(msg string, args ...any) {
@@ -137,8 +142,12 @@ func (l *LocalStreamProxy) handleClient(clientConn net.Conn) {
 				break
 			}
 
+			if l.extraVerbose {
+				l.Debug("Received %d bytes from server", n)
+			}
+
 			if n == sBufferLen {
-				l.Info("Warning: local stream buffer may be too small")
+				l.Info("Warning: local stream server buffer may be too small")
 			}
 
 			rr, err := rtsp.ReadResponse(bytes.NewBuffer(sBuffer))
@@ -179,10 +188,18 @@ func (l *LocalStreamProxy) handleClient(clientConn net.Conn) {
 
 	for {
 		// Read data from the client
-		_, err := clientConn.Read(cBuffer)
+		n, err := clientConn.Read(cBuffer)
 		if err != nil {
 			l.Info("Error reading from client: %s", err)
 			break
+		}
+
+		if l.extraVerbose {
+			l.Debug("Received %d bytes from client", n)
+		}
+
+		if n == cBufferLen {
+			l.Info("Warning: local stream client buffer may be too small")
 		}
 
 		rr, err := rtsp.ReadRequest(bytes.NewBuffer(cBuffer))
