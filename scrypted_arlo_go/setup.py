@@ -83,7 +83,7 @@ class CustomBuildExt(build_ext):
 
 setuptools.setup(
     name=PACKAGE_NAME,
-    version="0.7.7",
+    version="0.7.8",
     author="Brett Jia",
     author_email="dev.bjia56@gmail.com",
     description="Go extensions for @scrypted/arlo",
