@@ -103,6 +103,11 @@ func (l *LocalStreamProxy) Start() (port int, err error) {
 	return port, nil
 }
 
+const (
+	cBufferLen = 4096
+	sBufferLen = 40960
+)
+
 func (l *LocalStreamProxy) handleClient(clientConn net.Conn) {
 	defer clientConn.Close()
 
@@ -117,8 +122,8 @@ func (l *LocalStreamProxy) handleClient(clientConn net.Conn) {
 
 	l.Info("Proxying from %s to %s", clientConn.RemoteAddr(), backendConn.RemoteAddr())
 
-	cBuffer := make([]byte, 4096)
-	sBuffer := make([]byte, 4096)
+	cBuffer := make([]byte, cBufferLen)
+	sBuffer := make([]byte, sBufferLen)
 	nonce := 0
 
 	go func() {
