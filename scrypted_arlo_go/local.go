@@ -137,6 +137,10 @@ func (l *LocalStreamProxy) handleClient(clientConn net.Conn) {
 				break
 			}
 
+			if n == sBufferLen {
+				l.Info("Warning: local stream buffer may be too small")
+			}
+
 			rr, err := rtsp.ReadResponse(bytes.NewBuffer(sBuffer))
 			if err != nil {
 				if err == rtsp.NOT_RTSP_PACKET {
