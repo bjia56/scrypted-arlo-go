@@ -150,9 +150,24 @@ func (l *LocalStreamProxy) handleClient(clientConn net.Conn) {
 				l.Info("Warning: local stream server buffer may be too small")
 			}
 
+			if n < 4 || string(sBuffer[:4]) != "RTSP" {
+				if l.extraVerbose {
+					l.Debug("Non-RTSP packet")
+				}
+				_, err = clientConn.Write(sBuffer[:n])
+				if err != nil {
+					l.Info("Error writing to client: %s", err)
+					break
+				}
+				continue
+			}
+
 			rr, err := rtsp.ReadResponse(bytes.NewBuffer(sBuffer))
 			if err != nil {
 				if err == rtsp.NOT_RTSP_PACKET {
+					if l.extraVerbose {
+						l.Debug("Non-RTSP packet")
+					}
 					_, err = clientConn.Write(sBuffer[:n])
 					if err != nil {
 						l.Info("Error writing to client: %s", err)
