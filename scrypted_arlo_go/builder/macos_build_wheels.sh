@@ -35,7 +35,7 @@ uninstall_python() (
 
 build_wheel() (
     PY_MINOR=$1
-    ln -sf /opt/homebrew/bin/python3.$PY_MINOR  /usr/local/bin/python_for_build
+    ln -sf $(brew --prefix python@3.$PY_MINOR)/libexec/bin/python3.$PY_MINOR  /usr/local/bin/python_for_build
     /usr/local/bin/python_for_build --version
     /usr/local/bin/python_for_build -m pip install cibuildwheel==2.16.2 setuptools git+https://github.com/bjia56/pybindgen.git@pypy-fixes --break-system-packages
     CIBW_BUILD="cp3$PY_MINOR-*" /usr/local/bin/python_for_build -m cibuildwheel --output-dir wheelhouse scrypted_arlo_go
@@ -45,7 +45,7 @@ test_wheel() (
     PY_MINOR=$1
     if [ "$CIBW_ARCHS" == "x86_64" ]
     then
-        ln -sf /opt/homebrew/bin/python3.$PY_MINOR  /usr/local/bin/python_for_build
+        ln -sf $(brew --prefix python@3.$PY_MINOR)/libexec/bin/python3.$PY_MINOR  /usr/local/bin/python_for_build
         /usr/local/bin/python_for_build -m pip install wheelhouse/*cp3$PY_MINOR*.whl --break-system-packages
         /usr/local/bin/python_for_build -c "import scrypted_arlo_go; print(scrypted_arlo_go)"
     fi
