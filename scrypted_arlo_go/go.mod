@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/jart/gosip v0.0.0-20220818224804-29801cedf805
-	github.com/pion/webrtc/v3 v3.2.43
+	github.com/pion/webrtc/v3 v3.2.44
 )
 
 require (
@@ -22,7 +22,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/pion/datachannel v1.5.6 // indirect
 	github.com/pion/dtls/v2 v2.2.10 // indirect
-	github.com/pion/ice/v2 v2.3.24 // indirect
+	github.com/pion/ice/v2 v2.3.27 // indirect
 	github.com/pion/interceptor v0.1.29
 	github.com/pion/logging v0.2.2
 	github.com/pion/mdns v0.0.12 // indirect
