@@ -59,6 +59,17 @@ class CustomBuildExt(build_ext):
             env["CGO_LDFLAGS"] = "-mmacosx-version-min=" + min_ver
             env["CGO_CFLAGS"] = "-mmacosx-version-min=" + min_ver
 
+        if sys.platform == "win32":
+            import sysconfig
+            include_path = sysconfig.get_paths()['include']
+            lib_path = sysconfig.get_config_var("LIBDIR")
+            lib = sysconfig.get_config_var("LIBRARY").replace(".dll", ".lib")
+            env["CGO_CFLAGS"] = f"-I{include_path}"
+            env["CGO_LDFLAGS"] = f"-L{lib_path} -l:{lib}"
+            env["GOPY_INCLUDE"] = include_path
+            env["GOPY_LIBDIR"] = lib_path
+            env["GOPY_PYLIB"] = f":{lib}"
+
         subprocess.check_call(["go", "generate"], env=env)
         subprocess.check_call(
             [
