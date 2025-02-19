@@ -19,7 +19,7 @@ jobs:
         arch_cibw_go:
           - [ "x86_64", "amd64" ]
           - [ "arm64", "arm64" ]
-    runs-on: macos-12
+    runs-on: macos-13
     steps:
       - uses: actions/checkout@v4
 
@@ -54,7 +54,7 @@ jobs:
   build_linux_x86_64:
     #if: false
     name: Linux x86_64
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -85,26 +85,18 @@ jobs:
   build_linux_arm64:
     #if: false
     name: Linux arm64
-    runs-on: ubuntu-20.04
-    strategy:
-      fail-fast: false
-      matrix:
-        python3_version: [ 7, 8, 9, 10, 11, 12 ]
+    runs-on: ubuntu-22.04-arm
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Build 3.${{ matrix.python3_version }} wheels
+      - name: Build wheels
         uses: pypa/cibuildwheel@v2.17.0
         with:
           package-dir: ./scrypted_arlo_go
-        env:
-          CIBW_BUILD: "cp3${{ matrix.python3_version }}*_aarch64 pp3${{ matrix.python3_version }}*_aarch64"
+          CIBW_BUILD: "cp3*_aarch64 pp3*_aarch64"
           CIBW_SKIP: "cp36-* *-musllinux_aarch64"
-          CIBW_ARCHS: "aarch64"
+          CIBW_ARCHS: "native"
           CIBW_ENVIRONMENT: >
             PATH=$PATH:/usr/local/go/bin
             CGO_ENABLED=1
@@ -117,7 +109,7 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: wheels-linux-arm64-${{ matrix.python3_version }}
+          name: wheels-linux-arm64
           path: ./wheelhouse/*.whl
 
   build_linux_armv7l:
@@ -127,7 +119,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python3_version: [ 7, 8, 9, 10, 11, 12 ]
+        python3_version: [ 7, 8, 9, 10, 11, 12, 13 ]
 
     steps:
       - name: Checkout repository
