@@ -29,10 +29,10 @@ jobs:
           go-version: "1.19.x"
 
       - name: install gopy
-        run: go install github.com/go-python/gopy@v0.4.5
+        run: go install github.com/go-python/gopy@v0.4.10
 
       - name: install goimports
-        run: go install golang.org/x/tools/cmd/goimports@latest
+        run: go install golang.org/x/tools/cmd/goimports@v0.17.0
 
       - name: build wheels
         run: ./scrypted_arlo_go/builder/macos_build_wheels.sh
@@ -73,8 +73,8 @@ jobs:
           CIBW_BEFORE_ALL_LINUX: |
             curl -o go.tar.gz https://dl.google.com/go/go1.19.9.linux-amd64.tar.gz
             tar -C /usr/local -xzf go.tar.gz
-            go install github.com/go-python/gopy@v0.4.5
-            go install golang.org/x/tools/cmd/goimports@latest
+            go install github.com/go-python/gopy@v0.4.10
+            go install golang.org/x/tools/cmd/goimports@v0.17.0
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
@@ -94,6 +94,7 @@ jobs:
         uses: pypa/cibuildwheel@v2.17.0
         with:
           package-dir: ./scrypted_arlo_go
+        env:
           CIBW_BUILD: "cp3*_aarch64 pp3*_aarch64"
           CIBW_SKIP: "cp36-* *-musllinux_aarch64"
           CIBW_ARCHS: "native"
@@ -103,8 +104,8 @@ jobs:
           CIBW_BEFORE_ALL_LINUX: |
             curl -o go.tar.gz https://dl.google.com/go/go1.19.9.linux-arm64.tar.gz
             tar -C /usr/local -xzf go.tar.gz
-            go install github.com/go-python/gopy@v0.4.5
-            go install golang.org/x/tools/cmd/goimports@latest
+            go install github.com/go-python/gopy@v0.4.10
+            go install golang.org/x/tools/cmd/goimports@v0.17.0
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
@@ -168,16 +169,10 @@ jobs:
           go-version: "1.19.x"
 
       - name: install gopy
-        run: |
-          cd $env:TEMP
-          git clone https://github.com/bjia56/gopy
-          cd gopy
-          git checkout v0.4.5+bjia56.v1
-          go install -v
-          gopy
+        run: go install github.com/go-python/gopy@v0.4.10
 
       - name: install goimports
-        run: go install golang.org/x/tools/cmd/goimports@latest
+        run: go install golang.org/x/tools/cmd/goimports@v0.17.0
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.17.0

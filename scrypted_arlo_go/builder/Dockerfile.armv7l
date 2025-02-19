@@ -1,8 +1,8 @@
 FROM ghcr.io/bjia56/armv7l-wheel-builder:main
 ARG PYTHON3_VERSION=9
 
-RUN go install github.com/go-python/gopy@v0.4.5 && \
-    go install golang.org/x/tools/cmd/goimports@latest
+RUN go install github.com/go-python/gopy@v0.4.10 && \
+    go install golang.org/x/tools/cmd/goimports@v0.17.0
 
 RUN mkdir build
 WORKDIR build
