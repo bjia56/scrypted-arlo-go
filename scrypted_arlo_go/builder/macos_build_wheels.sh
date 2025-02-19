@@ -25,7 +25,8 @@ _start_group() (
 
 install_python() (
     PY_MINOR=$1
-    brew install --force python@3.$PY_MINOR
+    # python install can fail due to symlink errors for 2to3, etc.
+    brew install python@3.$PY_MINOR || true
 )
 
 uninstall_python() (
