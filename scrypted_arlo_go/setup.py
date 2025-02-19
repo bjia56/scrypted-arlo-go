@@ -63,7 +63,10 @@ class CustomBuildExt(build_ext):
             import sysconfig
             include_path = sysconfig.get_paths()['include']
             lib_path = sysconfig.get_config_var("LIBDIR")
-            lib = sysconfig.get_config_var("LIBRARY").replace(".dll", ".lib")
+            lib = f"python{sys.version_info.major}{sys.version_info.minor}.lib"
+            assert include_path
+            assert lib_path
+            assert lib
             env["CGO_CFLAGS"] = f"-I{include_path}"
             env["CGO_LDFLAGS"] = f"-L{lib_path} -l:{lib}"
             env["GOPY_INCLUDE"] = include_path
