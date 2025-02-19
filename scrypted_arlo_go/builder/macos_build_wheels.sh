@@ -25,7 +25,7 @@ _start_group() (
 
 install_python() (
     PY_MINOR=$1
-    brew install python@3.$PY_MINOR
+    brew install --force python@3.$PY_MINOR
 )
 
 uninstall_python() (
