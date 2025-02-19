@@ -65,7 +65,7 @@ jobs:
           package-dir: ./scrypted_arlo_go
         env:
           CIBW_BUILD: "cp3*_x86_64 pp3*_x86_64"
-          CIBW_SKIP: "cp36-* *-musllinux_x86_64"
+          CIBW_SKIP: "cp36-* cp37-* cp38-* *-musllinux_x86_64"
           CIBW_ARCHS: "native"
           CIBW_ENVIRONMENT: >
             PATH=$PATH:/usr/local/go/bin
@@ -96,7 +96,7 @@ jobs:
           package-dir: ./scrypted_arlo_go
         env:
           CIBW_BUILD: "cp3*_aarch64 pp3*_aarch64"
-          CIBW_SKIP: "cp36-* *-musllinux_aarch64"
+          CIBW_SKIP: "cp36-* cp37-* cp38-* *-musllinux_aarch64"
           CIBW_ARCHS: "native"
           CIBW_ENVIRONMENT: >
             PATH=$PATH:/usr/local/go/bin
@@ -120,7 +120,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python3_version: [ 7, 8, 9, 10, 11, 12, 13 ]
+        python3_version: [ 9, 10, 11, 12, 13 ]
 
     steps:
       - name: Checkout repository
@@ -180,7 +180,7 @@ jobs:
           package-dir: ./scrypted_arlo_go
         env:
           CIBW_BUILD: "cp3* pp3*"
-          CIBW_SKIP: "cp36-*"
+          CIBW_SKIP: "cp36-* cp37-* cp38-*"
           CIBW_ARCHS: "native"
           CIBW_ENVIRONMENT: >
             GOARCH=amd64

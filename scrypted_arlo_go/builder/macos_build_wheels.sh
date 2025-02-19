@@ -53,12 +53,6 @@ test_wheel() (
 
 brew update
 
-_start_group "Python 3.8"
-install_python 8
-build_wheel 8
-test_wheel 8
-uninstall_python 8
-
 _start_group "Python 3.9"
 install_python 9
 build_wheel 9
