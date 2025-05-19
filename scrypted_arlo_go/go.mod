@@ -1,6 +1,6 @@
 module scrypted_arlo_go
 
-go 1.19
+go 1.22
 
 require (
 	github.com/jart/gosip v0.0.0-20220818224804-29801cedf805
@@ -9,7 +9,7 @@ require (
 
 require (
 	github.com/beatgammit/rtsp v0.0.0-20150328165920-b2346852d8f4
-	github.com/tmaxmax/go-sse v0.8.0
+	github.com/tmaxmax/go-sse v0.11.0
 	golang.org/x/exp v0.0.0-20240325151524-a685a6edb6d8
 )
 
